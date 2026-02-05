@@ -26,3 +26,9 @@ export function extractDatabase(request: Request) {
   const searchParams = new URLSearchParams(url.search)
   return searchParams.get('database') || ''
 }
+
+export function extractApiVersion(request: Request) {
+  const url = new URL(request.url)
+  const searchParams = new URLSearchParams(url.search)
+  return searchParams.get('apiVersion') || 'v1'
+}

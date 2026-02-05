@@ -1,58 +1,110 @@
-# Chromadb Admin
+# ChromaDB Admin
 
-Admin UI for the Chroma embedding database, built with Next.js
+A professional, dark-themed admin UI for the [Chroma](https://docs.trychroma.com) embedding database, built with Next.js. Inspired by [TablePlus](https://tableplus.com/).
 
-![screely-1696786774071](https://github.com/flanker/chromadb-admin/assets/109811/6d4369d4-d10c-49f7-8342-89849f271dbe)
+> Forked from [flanker/chromadb-admin](https://github.com/flanker/chromadb-admin)
 
-## Links：
+## What's Changed (This Fork)
 
-* GitHub Repo: [https://github.com/flanker/chromadb-admin](https://github.com/flanker/chromadb-admin)
-* Chroma Official Website [https://docs.trychroma.com](https://docs.trychroma.com)
+### TablePlus-Inspired UI Rewrite
+
+The entire frontend has been rewritten with a three-panel layout inspired by TablePlus and VS Code:
+
+- **Dark theme** with a VSCode/TablePlus-inspired color palette
+- **Left sidebar** (240px) — searchable collection list with right-click context menu (rename/delete)
+- **Center data grid** — dense table with 28px rows, color-coded columns (ID, Document, Numbers), row selection, and context actions
+- **Right detail panel** (320px) — vertical key-value view of selected record with color-coded values, metadata breakdown, and embedding preview
+- **Status bar** (24px) — record count, pagination, and connection info
+- **Compact toolbar** — segmented mode toggle (Vector/ID vs Text), monospace search input
+
+### API Version Support (v1 / v2)
+
+ChromaDB servers come in two API flavors:
+
+| Version | URL Pattern | Notes |
+|---------|-------------|-------|
+| **v1** (legacy) | `/api/v1/collections/...` | Older Chroma servers |
+| **v2** (current) | `/api/v2/tenants/{tenant}/databases/{db}/collections/...` | ChromaDB 0.4+ |
+
+This fork lets you select the API version on the Setup page. The v1 implementation uses raw HTTP calls (bypassing the `chromadb` npm client which only supports v2).
+
+### Tech Stack
+
+- **Next.js 14** (App Router)
+- **Mantine UI v7** with forced dark color scheme
+- **Jotai** for client state
+- **TanStack Query v5** for server state
+- **SCSS Modules** for component styling
+- **Inter** (UI) + **JetBrains Mono** (data) fonts
+
+## Links
+
+- Original repo: [flanker/chromadb-admin](https://github.com/flanker/chromadb-admin)
+- Chroma docs: [docs.trychroma.com](https://docs.trychroma.com)
 
 ## Authentication Support
 
-<img width="743" alt="image" src="https://github.com/flanker/chromadb-admin/assets/109811/c15cab9a-db80-4e2f-b732-a3bd5ef557da">
+Supports Token (Bearer) and Basic authentication, configured on the Setup page.
 
 ## Run Locally
 
-First, start the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-THen, open [http://localhost:3001](http://localhost:3001) in your browser to see the app.
+Open [http://localhost:3001](http://localhost:3001) in your browser. You'll be redirected to `/setup` to configure your connection.
 
 ## Run with Docker
-
-Run
 
 ```bash
 docker run -p 3001:3001 fengzhichao/chromadb-admin
 ```
 
-and visit https://localhost:3001⁠ in the browser.
+Visit http://localhost:3001 in the browser.
 
 *NOTE*: Use `http://host.docker.internal:8000` for the connection string if you want to connect to a ChromaDB instance running locally.
 
-## Build and Run with Docker locally
-
-Build the Docker image:
+## Build and Run with Docker Locally
 
 ```bash
 docker build -t chromadb-admin .
+docker run -p 3001:3001 chromadb-admin
 ```
 
-Run the Docker container:
+## Project Structure
 
-```bash
-docker run -p 3001:3001 chromadb-admin
+```
+src/
+  app/
+    layout.tsx              # Root layout (dark theme, fonts)
+    page.tsx                # Root redirect (-> /collections or /setup)
+    setup/page.tsx          # Connection setup (incl. API version selector)
+    collections/
+      [name]/layout.tsx     # Three-panel layout shell
+      [name]/page.tsx       # RecordPage wrapper
+      (withOutName)/        # No-collection-selected states
+    api/
+      collections/route.ts  # Collections CRUD API
+      collections/[collectionName]/records/route.ts  # Records API
+      embedding/route.ts    # Embedding proxy (OpenAI/Ollama/LM Studio)
+  components/
+    CollectionSidebar/      # Left panel - collection list
+    RecordPage/
+      DataToolbar/          # Search bar + mode toggle
+      DataGrid/             # Main data table
+      DetailPanel/          # Right panel - record detail view
+      StatusBar/            # Bottom status bar
+      atom.ts               # Jotai atoms
+      index.tsx             # Composition root
+  lib/
+    client/
+      query.ts              # React Query hooks
+      localstorage.ts       # Config persistence
+    server/
+      db.ts                 # Database layer (v1 raw HTTP + v2 ChromaClient)
+      params.ts             # Request parameter extraction
+    types.ts                # TypeScript types
 ```
 
 ## Note

@@ -9,6 +9,7 @@ export type AppConfig = {
   database: string
   embeddingModelUrl: string
   embeddingModel: string
+  apiVersion: string
 }
 
 export type Collection = string

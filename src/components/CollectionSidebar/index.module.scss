@@ -1,0 +1,127 @@
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: #252526;
+  border-right: 1px solid #3c3c3c;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.searchBox {
+  padding: 8px;
+  border-bottom: 1px solid #3c3c3c;
+}
+
+.searchInput {
+  width: 100%;
+  background: #3c3c3c;
+  border: 1px solid #3c3c3c;
+  color: #cccccc;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 2px;
+  outline: none;
+  font-family: var(--font-inter), sans-serif;
+
+  &::placeholder {
+    color: #858585;
+  }
+
+  &:focus {
+    border-color: #007acc;
+  }
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #3c3c3c;
+    border-radius: 3px;
+  }
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #cccccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+  height: 28px;
+
+  &:hover {
+    background: #37373d;
+  }
+
+  svg {
+    flex-shrink: 0;
+    color: #858585;
+  }
+}
+
+.itemActive {
+  background: #094771;
+
+  &:hover {
+    background: #094771;
+  }
+}
+
+.itemName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contextMenu {
+  position: fixed;
+  background: #252526;
+  border: 1px solid #3c3c3c;
+  border-radius: 4px;
+  padding: 4px 0;
+  min-width: 160px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.contextMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #cccccc;
+
+  &:hover {
+    background: #094771;
+  }
+
+  svg {
+    color: #858585;
+  }
+}
+
+.contextMenuDanger {
+  color: #f44747;
+
+  svg {
+    color: #f44747;
+  }
+}

@@ -6,6 +6,21 @@ const nextConfig = {
       use: 'node-loader',
     });
 
+    // Ignore https:// imports from chromadb (browser-only code path)
+    config.module.rules.push({
+      test: /\.mjs$/,
+      include: /chromadb/,
+      resolve: {
+        fullySpecified: false,
+      },
+    });
+
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^https:\/\//,
+      })
+    );
+
     return config;
   },
 }

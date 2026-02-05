@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 
-import { extractAuth, extractConnectionString, extractDatabase, extractTenant } from '@/lib/server/params'
+import {
+  extractApiVersion,
+  extractAuth,
+  extractConnectionString,
+  extractDatabase,
+  extractTenant,
+} from '@/lib/server/params'
 import { fetchCollections, deleteCollection, updateCollection } from '@/lib/server/db'
 
 export async function GET(request: Request) {
@@ -8,9 +14,10 @@ export async function GET(request: Request) {
   const auth = extractAuth(request)
   const tenant = extractTenant(request)
   const database = extractDatabase(request)
+  const apiVersion = extractApiVersion(request)
 
   try {
-    const data = await fetchCollections(connectionString, auth, tenant, database)
+    const data = await fetchCollections(connectionString, auth, tenant, database, apiVersion)
     return NextResponse.json(data)
   } catch (error: any) {
     if (error.status === 401 || error.status === 403) {
@@ -28,6 +35,7 @@ export async function DELETE(request: Request) {
   const auth = extractAuth(request)
   const tenant = extractTenant(request)
   const database = extractDatabase(request)
+  const apiVersion = extractApiVersion(request)
 
   try {
     const body = await request.json()
@@ -42,7 +50,7 @@ export async function DELETE(request: Request) {
       )
     }
 
-    await deleteCollection(connectionString, auth, collectionName, tenant, database)
+    await deleteCollection(connectionString, auth, collectionName, tenant, database, apiVersion)
 
     return NextResponse.json({
       success: true,
@@ -63,6 +71,7 @@ export async function PATCH(request: Request) {
   const auth = extractAuth(request)
   const tenant = extractTenant(request)
   const database = extractDatabase(request)
+  const apiVersion = extractApiVersion(request)
 
   try {
     const body = await request.json()
@@ -86,7 +95,7 @@ export async function PATCH(request: Request) {
       )
     }
 
-    const result = await updateCollection(connectionString, auth, oldName, newName, tenant, database)
+    const result = await updateCollection(connectionString, auth, oldName, newName, tenant, database, apiVersion)
 
     return NextResponse.json({
       success: true,

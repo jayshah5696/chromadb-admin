@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 
-import { extractAuth, extractConnectionString, extractDatabase, extractTenant } from '@/lib/server/params'
+import {
+  extractApiVersion,
+  extractAuth,
+  extractConnectionString,
+  extractDatabase,
+  extractTenant,
+} from '@/lib/server/params'
 import { countRecord, fetchRecords, queryRecords, queryRecordsText, deleteRecord } from '@/lib/server/db'
 
 // without query embeddings
@@ -10,10 +16,11 @@ export async function GET(request: Request, { params }: { params: { collectionNa
   const page = extractPage(request)
   const tenant = extractTenant(request)
   const database = extractDatabase(request)
+  const apiVersion = extractApiVersion(request)
 
   try {
-    const data = await fetchRecords(connectionString, auth, params.collectionName, page, tenant, database)
-    const totalCount = await countRecord(connectionString, auth, params.collectionName, tenant, database)
+    const data = await fetchRecords(connectionString, auth, params.collectionName, page, tenant, database, apiVersion)
+    const totalCount = await countRecord(connectionString, auth, params.collectionName, tenant, database, apiVersion)
 
     return NextResponse.json({
       total: totalCount,
@@ -31,23 +38,38 @@ export async function GET(request: Request, { params }: { params: { collectionNa
 }
 
 // with query embeddings
-// src/app/api/collections/[collectionName]/records/route.ts
-
 export async function POST(request: Request, { params }: { params: { collectionName: string } }) {
   const connectionString = extractConnectionString(request)
   const auth = extractAuth(request)
   const queryInput = await extractQuery(request)
   const tenant = extractTenant(request)
   const database = extractDatabase(request)
+  const apiVersion = extractApiVersion(request)
 
   try {
     if (Array.isArray(queryInput)) {
-      const data = await queryRecords(connectionString, auth, params.collectionName, queryInput, tenant, database)
+      const data = await queryRecords(
+        connectionString,
+        auth,
+        params.collectionName,
+        queryInput,
+        tenant,
+        database,
+        apiVersion
+      )
       return NextResponse.json({
         records: data,
       })
     } else {
-      const data = await queryRecordsText(connectionString, auth, params.collectionName, queryInput, tenant, database)
+      const data = await queryRecordsText(
+        connectionString,
+        auth,
+        params.collectionName,
+        queryInput,
+        tenant,
+        database,
+        apiVersion
+      )
       return NextResponse.json({
         records: data,
       })
@@ -116,6 +138,7 @@ export async function DELETE(request: Request, { params }: { params: { collectio
   const auth = extractAuth(request)
   const tenant = extractTenant(request)
   const database = extractDatabase(request)
+  const apiVersion = extractApiVersion(request)
 
   try {
     const body = await request.json()
@@ -130,7 +153,7 @@ export async function DELETE(request: Request, { params }: { params: { collectio
       )
     }
 
-    await deleteRecord(connectionString, auth, params.collectionName, recordId, tenant, database)
+    await deleteRecord(connectionString, auth, params.collectionName, recordId, tenant, database, apiVersion)
 
     return NextResponse.json({
       success: true,

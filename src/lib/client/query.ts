@@ -22,12 +22,16 @@ function authParamsString(config?: AppConfig) {
   }
 }
 
+function apiVersionParam(config?: AppConfig) {
+  return `&apiVersion=${config?.apiVersion || 'v1'}`
+}
+
 export function useGetCollections(config?: AppConfig) {
   return useQuery({
     queryKey: ['config', config?.connectionString, 'collections'],
     queryFn: async (): Promise<Collection[]> => {
       const response = await fetch(
-        `/api/collections?connectionString=${config?.connectionString}${authParamsString(config)}&tenant=${config?.tenant}&database=${config?.database}`
+        `/api/collections?connectionString=${config?.connectionString}${authParamsString(config)}&tenant=${config?.tenant}&database=${config?.database}${apiVersionParam(config)}`
       )
       if (!response.ok) {
         throw new Error(`API getCollections returns response code: ${response.status}, message: ${response.statusText}`)
@@ -45,12 +49,12 @@ export function useGetCollectionRecords(config?: AppConfig, collectionName?: str
     queryFn: async (): Promise<QueryResult> => {
       if (query === undefined || query === '') {
         const response = await fetch(
-          `/api/collections/${collectionName}/records?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}&page=${page}&query=${query}${authParamsString(config)}`
+          `/api/collections/${collectionName}/records?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}&page=${page}&query=${query}${authParamsString(config)}${apiVersionParam(config)}`
         )
         return response.json()
       } else {
         const response = await fetch(
-          `/api/collections/${collectionName}/records?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}&authType=${config?.authType}${authParamsString(config)}`,
+          `/api/collections/${collectionName}/records?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}&authType=${config?.authType}${authParamsString(config)}${apiVersionParam(config)}`,
           {
             method: 'POST',
             body: JSON.stringify({ query: query }),
@@ -71,7 +75,7 @@ export function useDeleteRecord(collectionName: string) {
   return useMutation({
     mutationFn: async (recordId: string) => {
       const response = await fetch(
-        `/api/collections/${collectionName}/records?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}${authParamsString(config)}`,
+        `/api/collections/${collectionName}/records?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}${authParamsString(config)}${apiVersionParam(config)}`,
         {
           method: 'DELETE',
           headers: {
@@ -123,7 +127,7 @@ export function useDeleteCollection() {
   return useMutation({
     mutationFn: async (collectionName: string) => {
       const response = await fetch(
-        `/api/collections?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}${authParamsString(config)}`,
+        `/api/collections?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}${authParamsString(config)}${apiVersionParam(config)}`,
         {
           method: 'DELETE',
           headers: {
@@ -153,7 +157,7 @@ export function useRenameCollection() {
   return useMutation({
     mutationFn: async ({ oldName, newName }: { oldName: string; newName: string }) => {
       const response = await fetch(
-        `/api/collections?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}${authParamsString(config)}`,
+        `/api/collections?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}${authParamsString(config)}${apiVersionParam(config)}`,
         {
           method: 'PATCH',
           headers: {

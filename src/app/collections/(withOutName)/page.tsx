@@ -3,7 +3,6 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Container, Paper, Text, Title } from '@mantine/core'
 
 import { useGetCollections, useGetConfig } from '@/lib/client/query'
 
@@ -20,28 +19,38 @@ export default function CollectionsPage() {
 
   if (isError) {
     return (
-      <Container ta={'center'}>
-        <Paper withBorder ta={'center'} shadow="md" p={30} radius="md" mt="xl">
-          <Title order={2}>Something went wrong</Title>
-          <Text>{error.message}</Text>
-          <Text>
-            Go to <Link href={'/setup'}>Setup</Link>.
-          </Text>
-        </Paper>
-      </Container>
+      <div
+        style={{
+          textAlign: 'center',
+          padding: 40,
+          color: '#cccccc',
+          fontFamily: 'var(--font-inter), sans-serif',
+        }}
+      >
+        <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>Something went wrong</div>
+        <div style={{ fontSize: 13, color: '#f44747', marginBottom: 12 }}>{error.message}</div>
+        <Link href="/setup" style={{ color: '#4fc1ff', fontSize: 13 }}>
+          Go to Setup
+        </Link>
+      </div>
     )
   }
 
   if (collections != null && collections.length === 0) {
     return (
-      <Container ta={'center'}>
-        <Paper withBorder ta={'center'} shadow="md" p={30} radius="md" mt="xl">
-          <Text>There is no collections.</Text>
-          <Text>
-            <Link href={'/setup'}>Setup</Link> a new Chroma instance.
-          </Text>
-        </Paper>
-      </Container>
+      <div
+        style={{
+          textAlign: 'center',
+          padding: 40,
+          color: '#cccccc',
+          fontFamily: 'var(--font-inter), sans-serif',
+        }}
+      >
+        <div style={{ fontSize: 14, color: '#858585', marginBottom: 12 }}>No collections found</div>
+        <Link href="/setup" style={{ color: '#4fc1ff', fontSize: 13 }}>
+          Setup a new Chroma instance
+        </Link>
+      </div>
     )
   }
 

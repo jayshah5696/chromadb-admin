@@ -18,6 +18,7 @@ export function getConfig(): AppConfig {
       database: 'default_database',
       embeddingModelUrl: '',
       embeddingModel: 'text-embedding-3-small',
+      apiVersion: 'v1',
     }
   }
 }
@@ -39,6 +40,7 @@ export function updateConnectionString(connectionString: string) {
     database: '',
     embeddingModelUrl: '',
     embeddingModel: '',
+    apiVersion: 'v1',
   }
   const newConfig = {
     ...config,

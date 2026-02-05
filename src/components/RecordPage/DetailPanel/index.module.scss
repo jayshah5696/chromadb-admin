@@ -1,0 +1,131 @@
+.panel {
+  width: 320px;
+  min-width: 320px;
+  background: #252526;
+  border-left: 1px solid #3c3c3c;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 8px 0 12px;
+  border-bottom: 1px solid #3c3c3c;
+  font-size: 11px;
+  font-weight: 500;
+  color: #858585;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: var(--font-inter), sans-serif;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: #858585;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  border-radius: 2px;
+
+  &:hover {
+    background: #3c3c3c;
+    color: #cccccc;
+  }
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #3c3c3c;
+    border-radius: 3px;
+  }
+}
+
+.field {
+  margin-bottom: 12px;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: #858585;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  font-family: var(--font-inter), sans-serif;
+}
+
+.fieldValue {
+  font-size: 12px;
+  font-family: var(--font-mono), monospace;
+  line-height: 1.5;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.valueId {
+  color: #4fc1ff;
+}
+
+.valueString {
+  color: #ce9178;
+}
+
+.valueNumber {
+  color: #b5cea8;
+}
+
+.valueKey {
+  color: #9cdcfe;
+}
+
+.metadataEntry {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-family: var(--font-mono), monospace;
+}
+
+.embeddingDim {
+  color: #858585;
+  font-size: 11px;
+  font-family: var(--font-inter), sans-serif;
+  margin-bottom: 4px;
+}
+
+.embeddingValues {
+  font-size: 11px;
+  font-family: var(--font-mono), monospace;
+  color: #b5cea8;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.emptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #858585;
+  font-size: 12px;
+  font-family: var(--font-inter), sans-serif;
+  text-align: center;
+  padding: 20px;
+}

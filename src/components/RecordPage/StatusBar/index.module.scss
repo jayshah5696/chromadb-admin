@@ -1,0 +1,60 @@
+.statusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 24px;
+  min-height: 24px;
+  padding: 0 10px;
+  background: #007acc;
+  color: #ffffff;
+  font-size: 11px;
+  font-family: var(--font-inter), sans-serif;
+  user-select: none;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pageBtn {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 11px;
+  font-family: var(--font-inter), sans-serif;
+  border-radius: 2px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.pageInfo {
+  min-width: 60px;
+  text-align: center;
+}
