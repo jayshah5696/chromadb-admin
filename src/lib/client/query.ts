@@ -43,13 +43,20 @@ export function useGetCollections(config?: AppConfig) {
   })
 }
 
-export function useGetCollectionRecords(config?: AppConfig, collectionName?: string, page?: number, query?: string) {
+export function useGetCollectionRecords(
+  config?: AppConfig,
+  collectionName?: string,
+  page?: number,
+  query?: string,
+  where?: string
+) {
   return useQuery({
-    queryKey: ['collections', collectionName, 'records', query, page],
+    queryKey: ['collections', collectionName, 'records', query, where, page],
     queryFn: async (): Promise<QueryResult> => {
       if (query === undefined || query === '') {
+        const whereQuery = where ? `&where=${encodeURIComponent(where)}` : ''
         const response = await fetch(
-          `/api/collections/${collectionName}/records?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}&page=${page}&query=${query}${authParamsString(config)}${apiVersionParam(config)}`
+          `/api/collections/${collectionName}/records?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}&page=${page}&query=${query}${whereQuery}${authParamsString(config)}${apiVersionParam(config)}`
         )
         return response.json()
       } else {

@@ -7,7 +7,7 @@ import { notifications } from '@mantine/notifications'
 import { modals } from '@mantine/modals'
 
 import { useGetCollectionRecords, useGetConfig, useDeleteRecord } from '@/lib/client/query'
-import { queryAtom, currentPageAtom, selectedRecordAtom } from '@/components/RecordPage/atom'
+import { queryAtom, whereFilterAtom, currentPageAtom, selectedRecordAtom } from '@/components/RecordPage/atom'
 
 import styles from './index.module.scss'
 
@@ -15,13 +15,14 @@ import type { Record } from '@/lib/types'
 
 const DataGrid = ({ collectionName }: { collectionName: string }) => {
   const query = useAtomValue(queryAtom)
+  const whereFilter = useAtomValue(whereFilterAtom)
   const currentPage = useAtomValue(currentPageAtom)
   const [selectedRecord, setSelectedRecord] = useAtom(selectedRecordAtom)
   const setQuery = useSetAtom(queryAtom)
   const setCurrentPage = useSetAtom(currentPageAtom)
 
   const { data: config } = useGetConfig()
-  const { data: queryResult, isLoading } = useGetCollectionRecords(config, collectionName, currentPage, query)
+  const { data: queryResult, isLoading } = useGetCollectionRecords(config, collectionName, currentPage, query, whereFilter)
   const deleteRecordMutation = useDeleteRecord(collectionName)
 
   const [actionMenu, setActionMenu] = useState<{ x: number; y: number; record: Record } | null>(null)

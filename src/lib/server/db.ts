@@ -7,6 +7,8 @@ enum IncludeEnum {
   Distances = 'distances',
 }
 
+type WhereFilter = Record<string, any>
+
 type Auth = {
   authType: string
   token: string
@@ -117,7 +119,8 @@ async function v1FetchRecords(
   collectionName: string,
   page: number,
   tenant: string,
-  database: string
+  database: string,
+  where?: WhereFilter
 ) {
   const collectionId = await v1GetCollectionId(connectionString, auth, collectionName, tenant, database)
 
@@ -127,6 +130,7 @@ async function v1FetchRecords(
       limit: PAGE_SIZE,
       offset: (page - 1) * PAGE_SIZE,
       include: ['documents', 'metadatas'],
+      where,
     }),
   })
 
@@ -142,13 +146,23 @@ async function v1CountRecords(
   auth: Auth,
   collectionName: string,
   tenant: string,
-  database: string
+  database: string,
+  where?: WhereFilter
 ) {
   const collectionId = await v1GetCollectionId(connectionString, auth, collectionName, tenant, database)
 
-  return v1Fetch(`${connectionString}/api/v1/collections/${collectionId}/count`, auth, {
-    method: 'GET',
+  if (!where) {
+    return v1Fetch(`${connectionString}/api/v1/collections/${collectionId}/count`, auth, {
+      method: 'GET',
+    })
+  }
+
+  const data = await v1Fetch(`${connectionString}/api/v1/collections/${collectionId}/get`, auth, {
+    method: 'POST',
+    body: JSON.stringify({ include: [], where }),
   })
+
+  return data.ids.length
 }
 
 const QUERY_K = 10
@@ -345,7 +359,8 @@ async function v2FetchRecords(
   collectionName: string,
   page: number,
   tenant: string,
-  database: string
+  database: string,
+  where?: WhereFilter
 ) {
   const client = new ChromaClient({
     path: connectionString,
@@ -361,6 +376,7 @@ async function v2FetchRecords(
     limit: PAGE_SIZE,
     offset: (page - 1) * PAGE_SIZE,
     include: [IncludeEnum.Documents, IncludeEnum.Metadatas],
+    where,
   })
 
   return response.ids.map((id, index) => ({
@@ -375,7 +391,8 @@ async function v2CountRecords(
   auth: Auth,
   collectionName: string,
   tenant: string,
-  database: string
+  database: string,
+  where?: WhereFilter
 ) {
   const client = new ChromaClient({
     path: connectionString,
@@ -387,7 +404,16 @@ async function v2CountRecords(
   const embeddingFunction = new DefaultEmbeddingFunction()
   const collection = await client.getCollection({ name: collectionName, embeddingFunction })
 
-  return collection.count()
+  if (!where) {
+    return collection.count()
+  }
+
+  const response = await collection.get({
+    include: [],
+    where,
+  })
+
+  return response.ids.length
 }
 
 async function v2QueryRecords(
@@ -608,10 +634,11 @@ export async function fetchRecords(
   page: number,
   tenant: string,
   database: string,
-  apiVersion: string = 'v1'
+  apiVersion: string = 'v1',
+  where?: WhereFilter
 ) {
-  if (apiVersion === 'v1') return v1FetchRecords(connectionString, auth, collectionName, page, tenant, database)
-  return v2FetchRecords(connectionString, auth, collectionName, page, tenant, database)
+  if (apiVersion === 'v1') return v1FetchRecords(connectionString, auth, collectionName, page, tenant, database, where)
+  return v2FetchRecords(connectionString, auth, collectionName, page, tenant, database, where)
 }
 
 export async function fetchRecordDetail(
@@ -662,10 +689,11 @@ export async function countRecord(
   collectionName: string,
   tenant: string,
   database: string,
-  apiVersion: string = 'v1'
+  apiVersion: string = 'v1',
+  where?: WhereFilter
 ) {
-  if (apiVersion === 'v1') return v1CountRecords(connectionString, auth, collectionName, tenant, database)
-  return v2CountRecords(connectionString, auth, collectionName, tenant, database)
+  if (apiVersion === 'v1') return v1CountRecords(connectionString, auth, collectionName, tenant, database, where)
+  return v2CountRecords(connectionString, auth, collectionName, tenant, database, where)
 }
 
 export async function deleteRecord(

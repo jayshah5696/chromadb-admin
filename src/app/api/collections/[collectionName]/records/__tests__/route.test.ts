@@ -52,6 +52,36 @@ describe('GET /api/collections/[collectionName]/records', () => {
     expect(data.records).toEqual(mockRecords)
   })
 
+  it('passes parsed where filter to fetch/count for list requests', async () => {
+    vi.mocked(db.fetchRecords).mockResolvedValue([])
+    vi.mocked(db.countRecord).mockResolvedValue(0)
+
+    const where = encodeURIComponent(JSON.stringify({ source: 'documentation', page: { $gte: 5 } }))
+    const request = makeRequest(`http://localhost/api/collections/test-collection/records?page=1&where=${where}`)
+
+    await GET(request, PARAMS)
+
+    expect(db.fetchRecords).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'test-collection',
+      1,
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      { source: 'documentation', page: { $gte: 5 } }
+    )
+    expect(db.countRecord).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'test-collection',
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      { source: 'documentation', page: { $gte: 5 } }
+    )
+  })
+
   it('defaults to page 1 when page param is missing', async () => {
     vi.mocked(db.fetchRecords).mockResolvedValue([])
     vi.mocked(db.countRecord).mockResolvedValue(0)

@@ -193,6 +193,28 @@ describe('fetchRecords (v1)', () => {
     expect(body.include).toEqual(['documents', 'metadatas'])
   })
 
+
+  it('sends where filter in list and count requests', async () => {
+    const mockFetch = vi.fn()
+    mockFetch.mockResolvedValueOnce(jsonResponse(COLLECTIONS_LIST))
+    mockFetch.mockResolvedValueOnce(jsonResponse({ ids: [], documents: [], metadatas: [] }))
+    mockFetch.mockResolvedValueOnce(jsonResponse({ ids: ['a', 'b', 'c'], documents: [], metadatas: [] }))
+    vi.stubGlobal('fetch', mockFetch)
+
+    const conn = 'http://fetch-where-test:8000'
+    const where = { source: 'documentation', page: { $gte: 5 } }
+
+    await fetchRecords(conn, AUTH, 'docs', 1, TENANT, DB, 'v1', where)
+    await countRecord(conn, AUTH, 'docs', TENANT, DB, 'v1', where)
+
+    const listCall = mockFetch.mock.calls[1]
+    const listBody = JSON.parse(listCall[1].body)
+    expect(listBody.where).toEqual(where)
+
+    const countCall = mockFetch.mock.calls[2]
+    const countBody = JSON.parse(countCall[1].body)
+    expect(countBody.where).toEqual(where)
+  })
   it('does not include embeddings in list view', async () => {
     const mockFetch = vi.fn()
     mockFetch.mockResolvedValueOnce(jsonResponse(COLLECTIONS_LIST))
