@@ -25,7 +25,7 @@ const RecordPage = ({ collectionName }: { collectionName: string }) => {
         <DataToolbar />
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           <DataGrid collectionName={collectionName} />
-          {detailPanelOpen && <DetailPanel />}
+          {detailPanelOpen && <DetailPanel collectionName={collectionName} />}
         </div>
         <StatusBar collectionName={collectionName} />
       </div>

@@ -43,12 +43,62 @@ function v1Headers(auth: Auth): Record<string, string> {
 
 async function v1Fetch(url: string, auth: Auth, options: RequestInit = {}) {
   const headers = { ...v1Headers(auth), ...(options.headers as Record<string, string>) }
-  const response = await fetch(url, { ...options, headers })
+  // Node fetch follows 301 redirects but converts POST→GET per HTTP spec.
+  // Use redirect: 'manual' to handle redirects ourselves and preserve the method.
+  const response = await fetch(url, { ...options, headers, redirect: 'manual' })
+
+  // Handle 301/302/307/308 redirects while preserving the HTTP method
+  if (response.status >= 300 && response.status < 400) {
+    const location = response.headers.get('location')
+    if (location) {
+      const redirected = await fetch(location, { ...options, headers })
+      if (!redirected.ok) {
+        const text = await redirected.text()
+        throw new Error(`Failed to fetch ${location} with status ${redirected.status}: ${text}`)
+      }
+      return redirected.json()
+    }
+  }
+
   if (!response.ok) {
     const text = await response.text()
     throw new Error(`Failed to fetch ${url} with status ${response.status}: ${text}`)
   }
   return response.json()
+}
+
+// ─── Collection ID cache ─────────────────────────────────────────────────────
+
+const collectionIdCache = new Map<string, { id: string; timestamp: number }>()
+const CACHE_TTL_MS = 30_000
+
+function collectionCacheKey(connectionString: string, tenant: string, database: string, collectionName: string) {
+  return `${connectionString}:${tenant}:${database}:${collectionName}`
+}
+
+async function v1GetCollectionId(
+  connectionString: string,
+  auth: Auth,
+  collectionName: string,
+  tenant: string,
+  database: string
+): Promise<string> {
+  const key = collectionCacheKey(connectionString, tenant, database, collectionName)
+  const cached = collectionIdCache.get(key)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.id
+  }
+
+  const collections = await v1FetchCollections(connectionString, auth, tenant, database)
+  // Cache all collections from this response
+  for (const c of collections) {
+    const k = collectionCacheKey(connectionString, tenant, database, c.name)
+    collectionIdCache.set(k, { id: c.id, timestamp: Date.now() })
+  }
+
+  const collection = collections.find(c => c.name === collectionName)
+  if (!collection) throw new Error(`Collection '${collectionName}' not found`)
+  return collection.id
 }
 
 // ─── v1 API implementations (raw HTTP) ──────────────────────────────────────
@@ -69,16 +119,14 @@ async function v1FetchRecords(
   tenant: string,
   database: string
 ) {
-  const collections = await v1FetchCollections(connectionString, auth, tenant, database)
-  const collection = collections.find(c => c.name === collectionName)
-  if (!collection) throw new Error(`Collection '${collectionName}' not found`)
+  const collectionId = await v1GetCollectionId(connectionString, auth, collectionName, tenant, database)
 
-  const data = await v1Fetch(`${connectionString}/api/v1/collections/${collection.id}/get`, auth, {
+  const data = await v1Fetch(`${connectionString}/api/v1/collections/${collectionId}/get`, auth, {
     method: 'POST',
     body: JSON.stringify({
       limit: PAGE_SIZE,
       offset: (page - 1) * PAGE_SIZE,
-      include: ['documents', 'embeddings', 'metadatas'],
+      include: ['documents', 'metadatas'],
     }),
   })
 
@@ -86,7 +134,6 @@ async function v1FetchRecords(
     id,
     document: data.documents?.[index],
     metadata: data.metadatas?.[index],
-    embedding: data.embeddings?.[index],
   }))
 }
 
@@ -97,11 +144,9 @@ async function v1CountRecords(
   tenant: string,
   database: string
 ) {
-  const collections = await v1FetchCollections(connectionString, auth, tenant, database)
-  const collection = collections.find(c => c.name === collectionName)
-  if (!collection) throw new Error(`Collection '${collectionName}' not found`)
+  const collectionId = await v1GetCollectionId(connectionString, auth, collectionName, tenant, database)
 
-  return v1Fetch(`${connectionString}/api/v1/collections/${collection.id}/count`, auth, {
+  return v1Fetch(`${connectionString}/api/v1/collections/${collectionId}/count`, auth, {
     method: 'GET',
   })
 }
@@ -116,11 +161,9 @@ async function v1QueryRecords(
   tenant: string,
   database: string
 ) {
-  const collections = await v1FetchCollections(connectionString, auth, tenant, database)
-  const collection = collections.find(c => c.name === collectionName)
-  if (!collection) throw new Error(`Collection '${collectionName}' not found`)
+  const collectionId = await v1GetCollectionId(connectionString, auth, collectionName, tenant, database)
 
-  const data = await v1Fetch(`${connectionString}/api/v1/collections/${collection.id}/query`, auth, {
+  const data = await v1Fetch(`${connectionString}/api/v1/collections/${collectionId}/query`, auth, {
     method: 'POST',
     body: JSON.stringify({
       query_embeddings: [queryEmbeddings],
@@ -148,11 +191,9 @@ async function v1QueryRecordsText(
   tenant: string,
   database: string
 ) {
-  const collections = await v1FetchCollections(connectionString, auth, tenant, database)
-  const collection = collections.find(c => c.name === collectionName)
-  if (!collection) throw new Error(`Collection '${collectionName}' not found`)
+  const collectionId = await v1GetCollectionId(connectionString, auth, collectionName, tenant, database)
 
-  const data = await v1Fetch(`${connectionString}/api/v1/collections/${collection.id}/get`, auth, {
+  const data = await v1Fetch(`${connectionString}/api/v1/collections/${collectionId}/get`, auth, {
     method: 'POST',
     body: JSON.stringify({
       ids: [queryTexts],
@@ -182,11 +223,9 @@ async function v1DeleteRecord(
   tenant: string,
   database: string
 ) {
-  const collections = await v1FetchCollections(connectionString, auth, tenant, database)
-  const collection = collections.find(c => c.name === collectionName)
-  if (!collection) throw new Error(`Collection '${collectionName}' not found`)
+  const collectionId = await v1GetCollectionId(connectionString, auth, collectionName, tenant, database)
 
-  await v1Fetch(`${connectionString}/api/v1/collections/${collection.id}/delete`, auth, {
+  await v1Fetch(`${connectionString}/api/v1/collections/${collectionId}/delete`, auth, {
     method: 'POST',
     body: JSON.stringify({ ids: [recordId] }),
   })
@@ -218,12 +257,10 @@ async function v1UpdateCollection(
   database: string
 ) {
   // v1 doesn't support rename directly, so we copy records to a new collection and delete the old
-  const collections = await v1FetchCollections(connectionString, auth, tenant, database)
-  const collection = collections.find(c => c.name === oldName)
-  if (!collection) throw new Error(`Collection '${oldName}' not found`)
+  const collectionId = await v1GetCollectionId(connectionString, auth, oldName, tenant, database)
 
   // Get all records
-  const records = await v1Fetch(`${connectionString}/api/v1/collections/${collection.id}/get`, auth, {
+  const records = await v1Fetch(`${connectionString}/api/v1/collections/${collectionId}/get`, auth, {
     method: 'POST',
     body: JSON.stringify({
       include: ['documents', 'embeddings', 'metadatas'],
@@ -236,14 +273,14 @@ async function v1UpdateCollection(
     body: JSON.stringify({ name: newName }),
   })
 
-  // Get the new collection to find its ID
-  const updatedCollections = await v1FetchCollections(connectionString, auth, tenant, database)
-  const newCollection = updatedCollections.find(c => c.name === newName)
-  if (!newCollection) throw new Error(`Failed to create collection '${newName}'`)
+  // Invalidate cache for old name and get new collection ID
+  const oldCacheKey = collectionCacheKey(connectionString, tenant, database, oldName)
+  collectionIdCache.delete(oldCacheKey)
+  const newCollectionId = await v1GetCollectionId(connectionString, auth, newName, tenant, database)
 
   // Add records to new collection
   if (records.ids.length > 0) {
-    await v1Fetch(`${connectionString}/api/v1/collections/${newCollection.id}/add`, auth, {
+    await v1Fetch(`${connectionString}/api/v1/collections/${newCollectionId}/add`, auth, {
       method: 'POST',
       body: JSON.stringify({
         ids: records.ids,
@@ -260,6 +297,34 @@ async function v1UpdateCollection(
   })
 
   return { success: true, newName }
+}
+
+async function v1FetchRecordDetail(
+  connectionString: string,
+  auth: Auth,
+  collectionName: string,
+  recordId: string,
+  tenant: string,
+  database: string
+) {
+  const collectionId = await v1GetCollectionId(connectionString, auth, collectionName, tenant, database)
+
+  const data = await v1Fetch(`${connectionString}/api/v1/collections/${collectionId}/get`, auth, {
+    method: 'POST',
+    body: JSON.stringify({
+      ids: [recordId],
+      include: ['documents', 'embeddings', 'metadatas'],
+    }),
+  })
+
+  if (!data.ids || data.ids.length === 0) throw new Error('RecordNotFound')
+
+  return {
+    id: data.ids[0],
+    document: data.documents?.[0],
+    metadata: data.metadatas?.[0],
+    embedding: data.embeddings?.[0],
+  }
 }
 
 // ─── v2 API implementations (chromadb client) ───────────────────────────────
@@ -295,14 +360,13 @@ async function v2FetchRecords(
   const response = await collection.get({
     limit: PAGE_SIZE,
     offset: (page - 1) * PAGE_SIZE,
-    include: [IncludeEnum.Documents, IncludeEnum.Embeddings, IncludeEnum.Metadatas],
+    include: [IncludeEnum.Documents, IncludeEnum.Metadatas],
   })
 
   return response.ids.map((id, index) => ({
     id,
     document: response.documents[index],
     metadata: response.metadatas[index],
-    embedding: response.embeddings?.[index],
   }))
 }
 
@@ -488,6 +552,39 @@ async function v2UpdateCollection(
   return { success: true, newName }
 }
 
+async function v2FetchRecordDetail(
+  connectionString: string,
+  auth: Auth,
+  collectionName: string,
+  recordId: string,
+  tenant: string,
+  database: string
+) {
+  const client = new ChromaClient({
+    path: connectionString,
+    auth: formatAuth(auth),
+    database: database,
+    tenant: tenant,
+  })
+
+  const embeddingFunction = new DefaultEmbeddingFunction()
+  const collection = await client.getCollection({ name: collectionName, embeddingFunction })
+
+  const response = await collection.get({
+    ids: [recordId],
+    include: [IncludeEnum.Documents, IncludeEnum.Embeddings, IncludeEnum.Metadatas],
+  })
+
+  if (response.ids.length === 0) throw new Error('RecordNotFound')
+
+  return {
+    id: response.ids[0],
+    document: response.documents[0],
+    metadata: response.metadatas[0],
+    embedding: response.embeddings?.[0],
+  }
+}
+
 // ─── Exported functions (dispatch by apiVersion) ────────────────────────────
 
 export async function fetchCollections(
@@ -515,6 +612,20 @@ export async function fetchRecords(
 ) {
   if (apiVersion === 'v1') return v1FetchRecords(connectionString, auth, collectionName, page, tenant, database)
   return v2FetchRecords(connectionString, auth, collectionName, page, tenant, database)
+}
+
+export async function fetchRecordDetail(
+  connectionString: string,
+  auth: Auth,
+  collectionName: string,
+  recordId: string,
+  tenant: string,
+  database: string,
+  apiVersion: string = 'v1'
+) {
+  if (apiVersion === 'v1')
+    return v1FetchRecordDetail(connectionString, auth, collectionName, recordId, tenant, database)
+  return v2FetchRecordDetail(connectionString, auth, collectionName, recordId, tenant, database)
 }
 
 export async function queryRecords(

@@ -28,6 +28,33 @@ ChromaDB servers come in two API flavors:
 
 This fork lets you select the API version on the Setup page. The v1 implementation uses raw HTTP calls (bypassing the `chromadb` npm client which only supports v2).
 
+### Performance Improvements
+
+Several changes target navigation speed and reduced network overhead when working with large collections:
+
+- **Collection ID cache (30s TTL)** — The v1 API requires resolving collection names to UUIDs before every operation. A module-level cache stores all collection IDs from a single list response, so switching between collections in the sidebar doesn't trigger redundant list calls. The cache auto-expires after 30 seconds.
+- **Lazy embedding loading** — List view (`fetchRecords`) only requests `documents` and `metadatas`. Embeddings (which can be 1536-3072 floats per record) are fetched on-demand via `fetchRecordDetail` when a row is clicked, reducing list payload size significantly.
+- **React Query `staleTime: 30_000`** — Collection records and record details are considered fresh for 30 seconds, preventing refetches when navigating back to a previously viewed collection or re-selecting a row.
+- **Cache-aware collection rename** — `updateCollection` invalidates the old collection name from the ID cache so stale entries don't cause errors after rename operations.
+- **301 redirect handling** — `v1Fetch` follows redirects while preserving the HTTP method (POST stays POST), avoiding silent failures with proxied ChromaDB deployments.
+
+### Testing
+
+Tests use [Vitest](https://vitest.dev/) and cover the server-side API layer and route handlers.
+
+```bash
+npm test            # single run
+npm run test:watch  # watch mode
+```
+
+**Test suites (53 tests):**
+
+| Suite | Tests | What it covers |
+|-------|-------|----------------|
+| `db.test.ts` | 24 | Collection ID cache (TTL, key generation, bulk caching, invalidation), `fetchRecords` pagination and record mapping, `fetchRecordDetail` with embeddings, `queryRecords` embedding queries, `queryRecordsText` ID lookup, `countRecord`, `deleteRecord`, `deleteCollection`, auth headers (Bearer/Basic), 301 redirect following, API version dispatch |
+| `db.perf.test.ts` | 16 | Rapid collection switching (10 collections, 1 list call), back-and-forth navigation cache reuse, concurrent request handling, large record pagination (page 50), list vs detail fetch payload differences, rapid row click cache reuse, cache invalidation on rename, 100-collection bulk caching, error resilience (failed fetches don't poison cache), large embedding queries (1536d and 3072d) |
+| `route.test.ts` | 13 | GET handler (paginated listing, single record detail, error handling), POST handler (embedding array query, text/ID query, comma-separated float parsing, InvalidDimension/RecordNotFound/500 errors), DELETE handler (success, missing ID validation, failure) |
+
 ### Tech Stack
 
 - **Next.js 14** (App Router)

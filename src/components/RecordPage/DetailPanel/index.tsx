@@ -3,13 +3,22 @@
 import { useAtomValue, useSetAtom } from 'jotai'
 import { IconX } from '@tabler/icons-react'
 
+import { useGetConfig, useGetRecordDetail } from '@/lib/client/query'
 import { selectedRecordAtom, detailPanelOpenAtom } from '@/components/RecordPage/atom'
 
 import styles from './index.module.scss'
 
-const DetailPanel = () => {
+const DetailPanel = ({ collectionName }: { collectionName: string }) => {
   const selectedRecord = useAtomValue(selectedRecordAtom)
   const setDetailPanelOpen = useSetAtom(detailPanelOpenAtom)
+  const { data: config } = useGetConfig()
+  const { data: recordDetail, isLoading: isDetailLoading } = useGetRecordDetail(
+    config,
+    collectionName,
+    selectedRecord?.id
+  )
+
+  const embedding = recordDetail?.embedding ?? selectedRecord?.embedding
 
   return (
     <div className={styles.panel}>
@@ -59,15 +68,23 @@ const DetailPanel = () => {
 
           <div className={styles.field}>
             <div className={styles.fieldLabel}>Embedding</div>
-            <div className={styles.embeddingDim}>{selectedRecord.embedding.length} dimensions</div>
-            <div className={styles.embeddingValues}>
-              [
-              {selectedRecord.embedding
-                .slice(0, 20)
-                .map(v => v.toFixed(6))
-                .join(', ')}
-              {selectedRecord.embedding.length > 20 ? ', ...' : ''}]
-            </div>
+            {isDetailLoading ? (
+              <div className={styles.embeddingLoading}>Loading embedding...</div>
+            ) : embedding ? (
+              <>
+                <div className={styles.embeddingDim}>{embedding.length} dimensions</div>
+                <div className={styles.embeddingValues}>
+                  [
+                  {embedding
+                    .slice(0, 20)
+                    .map(v => v.toFixed(6))
+                    .join(', ')}
+                  {embedding.length > 20 ? ', ...' : ''}]
+                </div>
+              </>
+            ) : (
+              <div className={`${styles.fieldValue} ${styles.valueString}`}>(not available)</div>
+            )}
           </div>
         </div>
       )}

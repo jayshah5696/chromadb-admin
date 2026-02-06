@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "next lint",
-    "generate-mock-data": "node script/generate_mock_data.js"
+    "generate-mock-data": "node script/generate_mock_data.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@mantine/core": "^7.17.8",
@@ -49,6 +51,7 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "node-loader": "^2.0.0",
     "postcss-preset-mantine": "^1.15.0",
-    "postcss-simple-vars": "^7.0.1"
+    "postcss-simple-vars": "^7.0.1",
+    "vitest": "^4.0.18"
   }
 }

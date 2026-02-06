@@ -7,18 +7,41 @@ import {
   extractDatabase,
   extractTenant,
 } from '@/lib/server/params'
-import { countRecord, fetchRecords, queryRecords, queryRecordsText, deleteRecord } from '@/lib/server/db'
+import {
+  countRecord,
+  fetchRecordDetail,
+  fetchRecords,
+  queryRecords,
+  queryRecordsText,
+  deleteRecord,
+} from '@/lib/server/db'
 
 // without query embeddings
 export async function GET(request: Request, { params }: { params: { collectionName: string } }) {
   const connectionString = extractConnectionString(request)
   const auth = extractAuth(request)
-  const page = extractPage(request)
   const tenant = extractTenant(request)
   const database = extractDatabase(request)
   const apiVersion = extractApiVersion(request)
+  const recordId = extractRecordId(request)
 
   try {
+    // Single record detail fetch (with embeddings)
+    if (recordId) {
+      const record = await fetchRecordDetail(
+        connectionString,
+        auth,
+        params.collectionName,
+        recordId,
+        tenant,
+        database,
+        apiVersion
+      )
+      return NextResponse.json({ record })
+    }
+
+    // Listing fetch (without embeddings)
+    const page = extractPage(request)
     const data = await fetchRecords(connectionString, auth, params.collectionName, page, tenant, database, apiVersion)
     const totalCount = await countRecord(connectionString, auth, params.collectionName, tenant, database, apiVersion)
 
@@ -104,6 +127,11 @@ function extractPage(request: Request) {
   const url = new URL(request.url)
   const searchParams = new URLSearchParams(url.search)
   return parseInt(searchParams.get('page') || '1', 10)
+}
+
+function extractRecordId(request: Request): string | null {
+  const url = new URL(request.url)
+  return url.searchParams.get('recordId')
 }
 
 async function extractQuery(request: Request): Promise<number[] | string> {

@@ -25,7 +25,10 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
   const [newCollectionName, setNewCollectionName] = useState('')
   const contextMenuRef = useRef<HTMLDivElement>(null)
 
-  const filtered = collections?.filter(c => c.toLowerCase().includes(filter.toLowerCase())) ?? []
+  const sortedCollections = [...(collections || [])].sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: 'base' })
+  )
+  const filtered = sortedCollections.filter(c => c.toLowerCase().includes(filter.toLowerCase()))
 
   const handleClick = useCallback(
     (name: string) => {

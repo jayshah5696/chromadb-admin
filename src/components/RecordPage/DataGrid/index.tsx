@@ -55,6 +55,15 @@ const DataGrid = ({ collectionName }: { collectionName: string }) => {
 
   const handleQueryByRecord = () => {
     if (!actionMenu) return
+    if (!actionMenu.record.embedding) {
+      notifications.show({
+        title: 'Unavailable',
+        message: 'Select the record first to load its embedding, then try again.',
+        color: 'yellow',
+      })
+      setActionMenu(null)
+      return
+    }
     setQuery(actionMenu.record.embedding.join(', '))
     setCurrentPage(1)
     setActionMenu(null)
@@ -166,7 +175,9 @@ const DataGrid = ({ collectionName }: { collectionName: string }) => {
                   <td className={`${styles.td} ${styles.tdNumber}`}>{record.distance?.toFixed(6)}</td>
                 ) : (
                   <td className={`${styles.td} ${styles.tdNumber}`}>
-                    [{record.embedding.length}d] {record.embedding.slice(0, 4).join(', ')}...
+                    {record.embedding
+                      ? `[${record.embedding.length}d] ${record.embedding.slice(0, 4).join(', ')}...`
+                      : '\u2014'}
                   </td>
                 )}
               </tr>

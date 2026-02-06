@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { getConfig } from '@/lib/client/localstorage'
 
-import type { AppConfig, Collection, QueryResult } from '@/lib/types'
+import type { AppConfig, Collection, QueryResult, Record } from '@/lib/types'
 
 export function useGetConfig() {
   return useQuery({
@@ -63,7 +63,27 @@ export function useGetCollectionRecords(config?: AppConfig, collectionName?: str
         return response.json()
       }
     },
-    enabled: !!config?.connectionString,
+    enabled: !!config?.connectionString && !!collectionName,
+    staleTime: 30_000,
+    retry: false,
+  })
+}
+
+export function useGetRecordDetail(config?: AppConfig, collectionName?: string, recordId?: string | null) {
+  return useQuery({
+    queryKey: ['collections', collectionName, 'record-detail', recordId],
+    queryFn: async (): Promise<Record> => {
+      const response = await fetch(
+        `/api/collections/${collectionName}/records?connectionString=${config?.connectionString}&tenant=${config?.tenant}&database=${config?.database}&recordId=${encodeURIComponent(recordId!)}${authParamsString(config)}${apiVersionParam(config)}`
+      )
+      if (!response.ok) {
+        throw new Error(`Failed to fetch record detail: ${response.status}`)
+      }
+      const data = await response.json()
+      return data.record
+    },
+    enabled: !!config?.connectionString && !!collectionName && !!recordId,
+    staleTime: 30_000,
     retry: false,
   })
 }
