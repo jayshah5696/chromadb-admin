@@ -125,3 +125,20 @@
     color: #f44747;
   }
 }
+
+
+.sortSelect {
+  width: 100%;
+  margin-top: 6px;
+  background: #3c3c3c;
+  border: 1px solid #3c3c3c;
+  color: #cccccc;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 2px;
+  outline: none;
+
+  &:focus {
+    border-color: #007acc;
+  }
+}

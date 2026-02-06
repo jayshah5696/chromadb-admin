@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { IconTable, IconEdit, IconTrash } from '@tabler/icons-react'
 import { notifications } from '@mantine/notifications'
@@ -11,6 +11,37 @@ import { useGetCollections, useGetConfig, useDeleteCollection, useRenameCollecti
 
 import styles from './index.module.scss'
 
+type SortMode = 'alpha-asc' | 'alpha-desc' | 'recent'
+
+type SidebarState = {
+  filter: string
+  sortMode: SortMode
+  scrollTop: number
+  recentlyViewed: string[]
+}
+
+const SIDEBAR_STATE_KEY = 'chromadb-admin.sidebar.state'
+
+function readSidebarState(): SidebarState {
+  if (typeof window === 'undefined') {
+    return { filter: '', sortMode: 'alpha-asc', scrollTop: 0, recentlyViewed: [] }
+  }
+
+  try {
+    const raw = window.localStorage.getItem(SIDEBAR_STATE_KEY)
+    if (!raw) return { filter: '', sortMode: 'alpha-asc', scrollTop: 0, recentlyViewed: [] }
+    const parsed = JSON.parse(raw)
+    return {
+      filter: typeof parsed.filter === 'string' ? parsed.filter : '',
+      sortMode: parsed.sortMode ?? 'alpha-asc',
+      scrollTop: typeof parsed.scrollTop === 'number' ? parsed.scrollTop : 0,
+      recentlyViewed: Array.isArray(parsed.recentlyViewed) ? parsed.recentlyViewed : [],
+    }
+  } catch {
+    return { filter: '', sortMode: 'alpha-asc', scrollTop: 0, recentlyViewed: [] }
+  }
+}
+
 const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }) => {
   const router = useRouter()
   const { data: config } = useGetConfig()
@@ -18,20 +49,52 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
   const deleteCollectionMutation = useDeleteCollection()
   const renameCollectionMutation = useRenameCollection()
 
-  const [filter, setFilter] = useState('')
+  const initialState = useMemo(() => readSidebarState(), [])
+  const [filter, setFilter] = useState(initialState.filter)
+  const [sortMode, setSortMode] = useState<SortMode>(initialState.sortMode)
+  const [recentlyViewed, setRecentlyViewed] = useState<string[]>(initialState.recentlyViewed)
+
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; collection: string } | null>(null)
   const [renameModalOpened, setRenameModalOpened] = useState(false)
   const [renameTarget, setRenameTarget] = useState('')
   const [newCollectionName, setNewCollectionName] = useState('')
   const contextMenuRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
-  const sortedCollections = [...(collections || [])].sort((a, b) =>
-    a.localeCompare(b, undefined, { sensitivity: 'base' })
-  )
+  const sortedCollections = useMemo(() => {
+    const all = [...(collections || [])]
+    all.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    if (sortMode === 'alpha-desc') {
+      return all.reverse()
+    }
+    if (sortMode === 'recent') {
+      const recentSet = new Set(recentlyViewed)
+      const recentPart = recentlyViewed.filter(item => all.includes(item))
+      const remaining = all.filter(item => !recentSet.has(item))
+      return [...recentPart, ...remaining]
+    }
+    return all
+  }, [collections, sortMode, recentlyViewed])
+
   const filtered = sortedCollections.filter(c => c.toLowerCase().includes(filter.toLowerCase()))
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(
+      SIDEBAR_STATE_KEY,
+      JSON.stringify({ filter, sortMode, scrollTop: listRef.current?.scrollTop || 0, recentlyViewed })
+    )
+  }, [filter, sortMode, recentlyViewed])
+
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = initialState.scrollTop
+    }
+  }, [initialState.scrollTop])
 
   const handleClick = useCallback(
     (name: string) => {
+      setRecentlyViewed(prev => [name, ...prev.filter(item => item !== name)].slice(0, 10))
       router.push(`/collections/${name}`)
     },
     [router]
@@ -125,8 +188,23 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
             value={filter}
             onChange={e => setFilter(e.target.value)}
           />
+          <select className={styles.sortSelect} value={sortMode} onChange={e => setSortMode(e.target.value as SortMode)}>
+            <option value="alpha-asc">Sort: A-Z</option>
+            <option value="alpha-desc">Sort: Z-A</option>
+            <option value="recent">Sort: Recently viewed</option>
+          </select>
         </div>
-        <div className={styles.list}>
+        <div
+          className={styles.list}
+          ref={listRef}
+          onScroll={e => {
+            if (typeof window === 'undefined') return
+            window.localStorage.setItem(
+              SIDEBAR_STATE_KEY,
+              JSON.stringify({ filter, sortMode, scrollTop: e.currentTarget.scrollTop, recentlyViewed })
+            )
+          }}
+        >
           {filtered.map(collection => (
             <div
               key={collection}

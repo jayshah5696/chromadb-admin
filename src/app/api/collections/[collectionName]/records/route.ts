@@ -24,6 +24,7 @@ export async function GET(request: Request, { params }: { params: { collectionNa
   const database = extractDatabase(request)
   const apiVersion = extractApiVersion(request)
   const recordId = extractRecordId(request)
+  const where = extractWhere(request)
 
   try {
     // Single record detail fetch (with embeddings)
@@ -42,8 +43,8 @@ export async function GET(request: Request, { params }: { params: { collectionNa
 
     // Listing fetch (without embeddings)
     const page = extractPage(request)
-    const data = await fetchRecords(connectionString, auth, params.collectionName, page, tenant, database, apiVersion)
-    const totalCount = await countRecord(connectionString, auth, params.collectionName, tenant, database, apiVersion)
+    const data = await fetchRecords(connectionString, auth, params.collectionName, page, tenant, database, apiVersion, where)
+    const totalCount = await countRecord(connectionString, auth, params.collectionName, tenant, database, apiVersion, where)
 
     return NextResponse.json({
       total: totalCount,
@@ -132,6 +133,19 @@ function extractPage(request: Request) {
 function extractRecordId(request: Request): string | null {
   const url = new URL(request.url)
   return url.searchParams.get('recordId')
+}
+
+function extractWhere(request: Request): Record<string, any> | undefined {
+  const url = new URL(request.url)
+  const where = url.searchParams.get('where')
+
+  if (!where) return undefined
+
+  try {
+    return JSON.parse(where)
+  } catch {
+    throw new Error('InvalidWhereFilter')
+  }
 }
 
 async function extractQuery(request: Request): Promise<number[] | string> {

@@ -6,16 +6,18 @@ import { notifications } from '@mantine/notifications'
 import { SegmentedControl } from '@mantine/core'
 
 import { useGetEmbedding, useGetConfig } from '@/lib/client/query'
-import { currentPageAtom, queryAtom } from '@/components/RecordPage/atom'
+import { currentPageAtom, queryAtom, whereFilterAtom } from '@/components/RecordPage/atom'
 
 import styles from './index.module.scss'
 
 const DataToolbar = () => {
   const [query, setQuery] = useAtom(queryAtom)
+  const [whereFilter, setWhereFilter] = useAtom(whereFilterAtom)
   const setCurrentPage = useSetAtom(currentPageAtom)
   const { data: config } = useGetConfig()
 
   const [queryValue, setQueryValue] = useState(query)
+  const [whereInput, setWhereInput] = useState(whereFilter)
   const [queryMode, setQueryMode] = useState<'vector' | 'text'>('vector')
   const [embeddingInfo, setEmbeddingInfo] = useState<{ dimension: number; text: string } | null>(null)
 
@@ -26,6 +28,10 @@ const DataToolbar = () => {
       setQueryValue(query)
     }
   }, [query, queryMode, embeddingInfo])
+
+  useEffect(() => {
+    setWhereInput(whereFilter)
+  }, [whereFilter])
 
   const handleQuery = () => {
     if (queryMode === 'text') {
@@ -41,6 +47,29 @@ const DataToolbar = () => {
     setQuery('')
     setCurrentPage(1)
     setEmbeddingInfo(null)
+    setWhereInput('')
+    setWhereFilter('')
+  }
+
+
+  const handleApplyFilter = () => {
+    if (!whereInput.trim()) {
+      setWhereFilter('')
+      setCurrentPage(1)
+      return
+    }
+
+    try {
+      JSON.parse(whereInput)
+      setWhereFilter(whereInput)
+      setCurrentPage(1)
+    } catch (error) {
+      notifications.show({
+        title: 'Invalid metadata filter',
+        message: 'Please provide valid JSON for the metadata where filter.',
+        color: 'red',
+      })
+    }
   }
 
   const handleTextQuery = async () => {
@@ -130,6 +159,17 @@ const DataToolbar = () => {
       >
         {getEmbeddingMutation.isPending && <span className={styles.spinner} />}
         Query
+      </button>
+
+      <input
+        className={styles.filterInput}
+        placeholder='Metadata where JSON, e.g. {"source":"docs"}'
+        value={whereInput}
+        onChange={e => setWhereInput(e.target.value)}
+      />
+
+      <button className={`${styles.btn} ${styles.btnDefault}`} onClick={handleApplyFilter}>
+        Apply Filter
       </button>
 
       <button className={`${styles.btn} ${styles.btnDefault}`} onClick={handleClear}>
