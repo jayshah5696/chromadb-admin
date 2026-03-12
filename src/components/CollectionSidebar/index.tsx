@@ -1,15 +1,45 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import { IconTable, IconEdit, IconTrash } from '@tabler/icons-react'
 import { notifications } from '@mantine/notifications'
 import { modals } from '@mantine/modals'
+import { useDebouncedValue } from '@mantine/hooks'
 import { Modal, TextInput, Group, Button } from '@mantine/core'
 
 import { useGetCollections, useGetConfig, useDeleteCollection, useRenameCollection } from '@/lib/client/query'
 
 import styles from './index.module.scss'
+
+// ⚡ Bolt: Extract the list item into a memoized component.
+// This prevents O(N) re-renders of all list items when unrelated UI state
+// (like the context menu or rename modal) changes, significantly improving responsiveness.
+const CollectionItem = memo(
+  ({
+    collection,
+    isActive,
+    onClick,
+    onContextMenu,
+  }: {
+    collection: string
+    isActive: boolean
+    onClick: (name: string) => void
+    onContextMenu: (e: React.MouseEvent, collection: string) => void
+  }) => {
+    return (
+      <div
+        className={`${styles.item} ${isActive ? styles.itemActive : ''}`}
+        onClick={() => onClick(collection)}
+        onContextMenu={e => onContextMenu(e, collection)}
+      >
+        <IconTable size={14} stroke={1.5} />
+        <span className={styles.itemName}>{collection}</span>
+      </div>
+    )
+  }
+)
+CollectionItem.displayName = 'CollectionItem'
 
 type SortMode = 'alpha-asc' | 'alpha-desc' | 'recent'
 
@@ -51,6 +81,7 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
 
   const initialState = useMemo(() => readSidebarState(), [])
   const [filter, setFilter] = useState(initialState.filter)
+  const [debouncedFilter] = useDebouncedValue(filter, 200)
   const [sortMode, setSortMode] = useState<SortMode>(initialState.sortMode)
   const [recentlyViewed, setRecentlyViewed] = useState<string[]>(initialState.recentlyViewed)
 
@@ -76,7 +107,13 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
     return all
   }, [collections, sortMode, recentlyViewed])
 
-  const filtered = sortedCollections.filter(c => c.toLowerCase().includes(filter.toLowerCase()))
+  // ⚡ Bolt: Memoize the filtered array and debounce the filter input.
+  // This prevents O(N) string operations and re-renders on every keystroke,
+  // making the search input instantly responsive even with thousands of collections.
+  const filtered = useMemo(() => {
+    const lowerFilter = debouncedFilter.toLowerCase()
+    return sortedCollections.filter(c => c.toLowerCase().includes(lowerFilter))
+  }, [sortedCollections, debouncedFilter])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -188,7 +225,11 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
             value={filter}
             onChange={e => setFilter(e.target.value)}
           />
-          <select className={styles.sortSelect} value={sortMode} onChange={e => setSortMode(e.target.value as SortMode)}>
+          <select
+            className={styles.sortSelect}
+            value={sortMode}
+            onChange={e => setSortMode(e.target.value as SortMode)}
+          >
             <option value="alpha-asc">Sort: A-Z</option>
             <option value="alpha-desc">Sort: Z-A</option>
             <option value="recent">Sort: Recently viewed</option>
@@ -206,15 +247,13 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
           }}
         >
           {filtered.map(collection => (
-            <div
+            <CollectionItem
               key={collection}
-              className={`${styles.item} ${collection === currentCollection ? styles.itemActive : ''}`}
-              onClick={() => handleClick(collection)}
-              onContextMenu={e => handleContextMenu(e, collection)}
-            >
-              <IconTable size={14} stroke={1.5} />
-              <span className={styles.itemName}>{collection}</span>
-            </div>
+              collection={collection}
+              isActive={collection === currentCollection}
+              onClick={handleClick}
+              onContextMenu={handleContextMenu}
+            />
           ))}
         </div>
       </div>
