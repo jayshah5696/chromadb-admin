@@ -1,0 +1,4 @@
+## 2025-02-14 - Unmemoized Lists vs. UI State (Modals/Context Menus)
+
+**Learning:** In React list views (like `CollectionSidebar`), iterating and rendering large inline elements (e.g., `<div>` per collection) without virtualization is a common pattern. However, a major bottleneck arises when the list component shares state with unrelated UI elements (such as `renameModalOpened` or `contextMenu`). Changing this UI state forces a full re-render of every item in the list, making simple interactions (like typing in a modal) incredibly laggy.
+**Action:** Always extract list items into their own components wrapped in `React.memo` and ensure event handler props are wrapped in `useCallback`. Furthermore, combine this with `useMemo` on computationally expensive array operations (like `.filter`) and debounce rapid state updates (like filter text inputs) so UI interactions remain instant even with thousands of items.
