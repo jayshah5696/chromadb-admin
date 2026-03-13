@@ -43,8 +43,25 @@ export async function GET(request: Request, { params }: { params: { collectionNa
 
     // Listing fetch (without embeddings)
     const page = extractPage(request)
-    const data = await fetchRecords(connectionString, auth, params.collectionName, page, tenant, database, apiVersion, where)
-    const totalCount = await countRecord(connectionString, auth, params.collectionName, tenant, database, apiVersion, where)
+    const data = await fetchRecords(
+      connectionString,
+      auth,
+      params.collectionName,
+      page,
+      tenant,
+      database,
+      apiVersion,
+      where
+    )
+    const totalCount = await countRecord(
+      connectionString,
+      auth,
+      params.collectionName,
+      tenant,
+      database,
+      apiVersion,
+      where
+    )
 
     return NextResponse.json({
       total: totalCount,

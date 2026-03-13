@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+
 import {
   fetchCollections,
   fetchRecords,
@@ -92,14 +93,10 @@ describe('collection ID cache (v1)', () => {
     const mockFetch = vi.fn()
     // First round: list + get
     mockFetch.mockResolvedValueOnce(jsonResponse(COLLECTIONS_LIST))
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ ids: ['r1'], documents: ['d1'], metadatas: [null] })
-    )
+    mockFetch.mockResolvedValueOnce(jsonResponse({ ids: ['r1'], documents: ['d1'], metadatas: [null] }))
     // After TTL: list again + get
     mockFetch.mockResolvedValueOnce(jsonResponse(COLLECTIONS_LIST))
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ ids: ['r2'], documents: ['d2'], metadatas: [null] })
-    )
+    mockFetch.mockResolvedValueOnce(jsonResponse({ ids: ['r2'], documents: ['d2'], metadatas: [null] }))
 
     vi.stubGlobal('fetch', mockFetch)
     const conn = 'http://cache-ttl-test:8000'
@@ -120,13 +117,9 @@ describe('collection ID cache (v1)', () => {
     // List collections once
     mockFetch.mockResolvedValueOnce(jsonResponse(COLLECTIONS_LIST))
     // Get for 'docs'
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ ids: ['r1'], documents: ['d1'], metadatas: [null] })
-    )
+    mockFetch.mockResolvedValueOnce(jsonResponse({ ids: ['r1'], documents: ['d1'], metadatas: [null] }))
     // Get for 'images' (should NOT trigger another list call)
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ ids: ['r2'], documents: ['d2'], metadatas: [null] })
-    )
+    mockFetch.mockResolvedValueOnce(jsonResponse({ ids: ['r2'], documents: ['d2'], metadatas: [null] }))
 
     vi.stubGlobal('fetch', mockFetch)
     const conn = 'http://cache-all-test:8000'
@@ -145,9 +138,9 @@ describe('collection ID cache (v1)', () => {
 
     const conn = 'http://cache-notfound:8000'
 
-    await expect(
-      fetchRecords(conn, AUTH, 'nonexistent', 1, TENANT, DB, 'v1')
-    ).rejects.toThrow("Collection 'nonexistent' not found")
+    await expect(fetchRecords(conn, AUTH, 'nonexistent', 1, TENANT, DB, 'v1')).rejects.toThrow(
+      "Collection 'nonexistent' not found"
+    )
   })
 })
 
@@ -178,9 +171,7 @@ describe('fetchRecords (v1)', () => {
   it('sends correct pagination parameters', async () => {
     const mockFetch = vi.fn()
     mockFetch.mockResolvedValueOnce(jsonResponse(COLLECTIONS_LIST))
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ ids: [], documents: [], metadatas: [] })
-    )
+    mockFetch.mockResolvedValueOnce(jsonResponse({ ids: [], documents: [], metadatas: [] }))
     vi.stubGlobal('fetch', mockFetch)
     const conn = 'http://fetch-pagination-test:8000'
 
@@ -192,7 +183,6 @@ describe('fetchRecords (v1)', () => {
     expect(body.offset).toBe(40) // (3-1) * 20
     expect(body.include).toEqual(['documents', 'metadatas'])
   })
-
 
   it('sends where filter in list and count requests', async () => {
     const mockFetch = vi.fn()
@@ -218,9 +208,7 @@ describe('fetchRecords (v1)', () => {
   it('does not include embeddings in list view', async () => {
     const mockFetch = vi.fn()
     mockFetch.mockResolvedValueOnce(jsonResponse(COLLECTIONS_LIST))
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ ids: [], documents: [], metadatas: [] })
-    )
+    mockFetch.mockResolvedValueOnce(jsonResponse({ ids: [], documents: [], metadatas: [] }))
     vi.stubGlobal('fetch', mockFetch)
     const conn = 'http://fetch-no-embed-test:8000'
 
@@ -284,15 +272,11 @@ describe('fetchRecordDetail (v1)', () => {
   it('throws RecordNotFound when no results returned', async () => {
     const mockFetch = vi.fn()
     mockFetch.mockResolvedValueOnce(jsonResponse(COLLECTIONS_LIST))
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ ids: [], documents: [], metadatas: [] })
-    )
+    mockFetch.mockResolvedValueOnce(jsonResponse({ ids: [], documents: [], metadatas: [] }))
     vi.stubGlobal('fetch', mockFetch)
     const conn = 'http://detail-notfound-test:8000'
 
-    await expect(
-      fetchRecordDetail(conn, AUTH, 'docs', 'missing', TENANT, DB, 'v1')
-    ).rejects.toThrow('RecordNotFound')
+    await expect(fetchRecordDetail(conn, AUTH, 'docs', 'missing', TENANT, DB, 'v1')).rejects.toThrow('RecordNotFound')
   })
 })
 
@@ -352,15 +336,11 @@ describe('queryRecords (v1)', () => {
   it('throws on error response from chroma', async () => {
     const mockFetch = vi.fn()
     mockFetch.mockResolvedValueOnce(jsonResponse(COLLECTIONS_LIST))
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ error: 'InvalidDimension' })
-    )
+    mockFetch.mockResolvedValueOnce(jsonResponse({ error: 'InvalidDimension' }))
     vi.stubGlobal('fetch', mockFetch)
     const conn = 'http://query-error-test:8000'
 
-    await expect(
-      queryRecords(conn, AUTH, 'docs', [1.0], TENANT, DB, 'v1')
-    ).rejects.toThrow('InvalidDimension')
+    await expect(queryRecords(conn, AUTH, 'docs', [1.0], TENANT, DB, 'v1')).rejects.toThrow('InvalidDimension')
   })
 })
 
@@ -397,15 +377,11 @@ describe('queryRecordsText (v1)', () => {
   it('throws RecordNotFound when no IDs match', async () => {
     const mockFetch = vi.fn()
     mockFetch.mockResolvedValueOnce(jsonResponse(COLLECTIONS_LIST))
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ ids: [], documents: [], metadatas: [], embeddings: [] })
-    )
+    mockFetch.mockResolvedValueOnce(jsonResponse({ ids: [], documents: [], metadatas: [], embeddings: [] }))
     vi.stubGlobal('fetch', mockFetch)
     const conn = 'http://query-text-notfound:8000'
 
-    await expect(
-      queryRecordsText(conn, AUTH, 'docs', 'no-such-id', TENANT, DB, 'v1')
-    ).rejects.toThrow('RecordNotFound')
+    await expect(queryRecordsText(conn, AUTH, 'docs', 'no-such-id', TENANT, DB, 'v1')).rejects.toThrow('RecordNotFound')
   })
 })
 
