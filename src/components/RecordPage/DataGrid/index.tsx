@@ -22,7 +22,13 @@ const DataGrid = ({ collectionName }: { collectionName: string }) => {
   const setCurrentPage = useSetAtom(currentPageAtom)
 
   const { data: config } = useGetConfig()
-  const { data: queryResult, isLoading } = useGetCollectionRecords(config, collectionName, currentPage, query, whereFilter)
+  const { data: queryResult, isLoading } = useGetCollectionRecords(
+    config,
+    collectionName,
+    currentPage,
+    query,
+    whereFilter
+  )
   const deleteRecordMutation = useDeleteRecord(collectionName)
 
   const [actionMenu, setActionMenu] = useState<{ x: number; y: number; record: Record } | null>(null)

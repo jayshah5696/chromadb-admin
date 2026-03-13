@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
+
 import {
   fetchCollections,
   fetchRecords,
@@ -45,9 +46,7 @@ function makeRecordsWithEmbeddings(count: number, dims: number) {
   const base = makeRecords(count)
   return {
     ...base,
-    embeddings: Array.from({ length: count }, () =>
-      Array.from({ length: dims }, () => Math.random())
-    ),
+    embeddings: Array.from({ length: count }, () => Array.from({ length: dims }, () => Math.random())),
   }
 }
 
@@ -235,9 +234,7 @@ describe('list vs detail fetch performance', () => {
     const mockFetch = vi.fn()
 
     mockFetch.mockResolvedValueOnce(jsonResponse(collections))
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse(makeRecordsWithEmbeddings(1, 768))
-    )
+    mockFetch.mockResolvedValueOnce(jsonResponse(makeRecordsWithEmbeddings(1, 768)))
 
     vi.stubGlobal('fetch', mockFetch)
     const conn = 'http://detail-embed:8000'
@@ -396,9 +393,7 @@ describe('error resilience', () => {
     expect(result0).toHaveLength(5)
 
     // collection-1 fails, but shouldn't affect the cache
-    await expect(
-      fetchRecords(conn, AUTH, 'collection-1', 1, TENANT, DB, 'v1')
-    ).rejects.toThrow()
+    await expect(fetchRecords(conn, AUTH, 'collection-1', 1, TENANT, DB, 'v1')).rejects.toThrow()
 
     // collection-2 should still work with cached collection ID
     const result2 = await fetchRecords(conn, AUTH, 'collection-2', 1, TENANT, DB, 'v1')
@@ -421,9 +416,7 @@ describe('error resilience', () => {
     vi.stubGlobal('fetch', mockFetch)
     const conn = 'http://error-then-ok:8000'
 
-    await expect(
-      fetchRecords(conn, AUTH, 'collection-0', 1, TENANT, DB, 'v1')
-    ).rejects.toThrow()
+    await expect(fetchRecords(conn, AUTH, 'collection-0', 1, TENANT, DB, 'v1')).rejects.toThrow()
 
     // Cache should still work for collection ID resolution
     const result = await fetchRecords(conn, AUTH, 'collection-1', 1, TENANT, DB, 'v1')

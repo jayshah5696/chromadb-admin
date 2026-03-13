@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { IconTable, IconEdit, IconTrash } from '@tabler/icons-react'
 import { notifications } from '@mantine/notifications'
 import { modals } from '@mantine/modals'
+import { useDebouncedCallback } from '@mantine/hooks'
 import { Modal, TextInput, Group, Button } from '@mantine/core'
 
 import { useGetCollections, useGetConfig, useDeleteCollection, useRenameCollection } from '@/lib/client/query'
@@ -60,6 +61,12 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
   const [newCollectionName, setNewCollectionName] = useState('')
   const contextMenuRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+
+  // ⚡ Bolt: Debounce localStorage writes during scroll to prevent main thread blocking and jank
+  const handleScrollSave = useDebouncedCallback((scrollTop: number) => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify({ filter, sortMode, scrollTop, recentlyViewed }))
+  }, 200)
 
   const sortedCollections = useMemo(() => {
     const all = [...(collections || [])]
@@ -188,23 +195,17 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
             value={filter}
             onChange={e => setFilter(e.target.value)}
           />
-          <select className={styles.sortSelect} value={sortMode} onChange={e => setSortMode(e.target.value as SortMode)}>
+          <select
+            className={styles.sortSelect}
+            value={sortMode}
+            onChange={e => setSortMode(e.target.value as SortMode)}
+          >
             <option value="alpha-asc">Sort: A-Z</option>
             <option value="alpha-desc">Sort: Z-A</option>
             <option value="recent">Sort: Recently viewed</option>
           </select>
         </div>
-        <div
-          className={styles.list}
-          ref={listRef}
-          onScroll={e => {
-            if (typeof window === 'undefined') return
-            window.localStorage.setItem(
-              SIDEBAR_STATE_KEY,
-              JSON.stringify({ filter, sortMode, scrollTop: e.currentTarget.scrollTop, recentlyViewed })
-            )
-          }}
-        >
+        <div className={styles.list} ref={listRef} onScroll={e => handleScrollSave(e.currentTarget.scrollTop)}>
           {filtered.map(collection => (
             <div
               key={collection}
