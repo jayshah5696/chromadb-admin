@@ -40,6 +40,9 @@ export function useGetCollections(config?: AppConfig) {
     },
     enabled: !!config?.connectionString,
     retry: false,
+    // ⚡ Bolt: Cache collections list to prevent network requests on every window focus
+    // Expected impact: Eliminates redundant /api/collections fetches completely for 1 minute
+    staleTime: 60_000,
   })
 }
 
