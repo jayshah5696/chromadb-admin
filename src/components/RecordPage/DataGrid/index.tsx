@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, memo } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { IconDots, IconSearch, IconCopy, IconTrash } from '@tabler/icons-react'
 import { notifications } from '@mantine/notifications'
@@ -12,6 +12,50 @@ import { queryAtom, whereFilterAtom, currentPageAtom, selectedRecordAtom } from 
 import styles from './index.module.scss'
 
 import type { Record } from '@/lib/types'
+
+const DataGridRow = memo(
+  ({
+    record,
+    isSelected,
+    withQuery,
+    onRowClick,
+    onActionClick,
+  }: {
+    record: Record
+    isSelected: boolean
+    withQuery: boolean
+    onRowClick: (record: Record) => void
+    onActionClick: (e: React.MouseEvent, record: Record) => void
+  }) => {
+    return (
+      <tr
+        className={`${styles.tr} ${isSelected ? styles.trSelected : ''}`}
+        onClick={() => onRowClick(record)}
+      >
+        <td className={`${styles.td} ${styles.actionCell}`}>
+          <button className={styles.actionBtn} onClick={e => onActionClick(e, record)}>
+            <IconDots size={14} stroke={1.5} />
+          </button>
+        </td>
+        <td className={`${styles.td} ${styles.tdId}`}>{record.id}</td>
+        <td className={`${styles.td} ${styles.tdDocument}`}>{record.document}</td>
+        <td className={`${styles.td} ${styles.tdMetadata}`}>
+          {record.metadata ? JSON.stringify(record.metadata) : ''}
+        </td>
+        {withQuery ? (
+          <td className={`${styles.td} ${styles.tdNumber}`}>{record.distance?.toFixed(6)}</td>
+        ) : (
+          <td className={`${styles.td} ${styles.tdNumber}`}>
+            {record.embedding
+              ? `[${record.embedding.length}d] ${record.embedding.slice(0, 4).join(', ')}...`
+              : '\u2014'}
+          </td>
+        )}
+      </tr>
+    )
+  }
+)
+DataGridRow.displayName = 'DataGridRow'
 
 const DataGrid = ({ collectionName }: { collectionName: string }) => {
   const query = useAtomValue(queryAtom)
@@ -157,31 +201,14 @@ const DataGrid = ({ collectionName }: { collectionName: string }) => {
           </thead>
           <tbody>
             {queryResult.records.map(record => (
-              <tr
+              <DataGridRow
                 key={record.id}
-                className={`${styles.tr} ${selectedRecord?.id === record.id ? styles.trSelected : ''}`}
-                onClick={() => handleRowClick(record)}
-              >
-                <td className={`${styles.td} ${styles.actionCell}`}>
-                  <button className={styles.actionBtn} onClick={e => handleActionClick(e, record)}>
-                    <IconDots size={14} stroke={1.5} />
-                  </button>
-                </td>
-                <td className={`${styles.td} ${styles.tdId}`}>{record.id}</td>
-                <td className={`${styles.td} ${styles.tdDocument}`}>{record.document}</td>
-                <td className={`${styles.td} ${styles.tdMetadata}`}>
-                  {record.metadata ? JSON.stringify(record.metadata) : ''}
-                </td>
-                {withQuery ? (
-                  <td className={`${styles.td} ${styles.tdNumber}`}>{record.distance?.toFixed(6)}</td>
-                ) : (
-                  <td className={`${styles.td} ${styles.tdNumber}`}>
-                    {record.embedding
-                      ? `[${record.embedding.length}d] ${record.embedding.slice(0, 4).join(', ')}...`
-                      : '\u2014'}
-                  </td>
-                )}
-              </tr>
+                record={record}
+                isSelected={selectedRecord?.id === record.id}
+                withQuery={withQuery}
+                onRowClick={handleRowClick}
+                onActionClick={handleActionClick}
+              />
             ))}
           </tbody>
         </table>

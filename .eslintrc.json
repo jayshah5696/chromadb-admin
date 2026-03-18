@@ -34,13 +34,7 @@
       "error",
       {
         "alphabetize": { "order": "desc", "caseInsensitive": true },
-        "groups": [[
-          "builtin", "external"
-        ], [
-          "internal", "parent", "sibling", "index", "object"
-        ], [
-          "type"
-        ]],
+        "groups": [["builtin", "external"], ["internal", "parent", "sibling", "index", "object"], ["type"]],
         "pathGroups": [
           {
             "pattern": "./**/*.module.scss",
@@ -59,24 +53,24 @@
     ],
     "@typescript-eslint/consistent-type-imports": "error"
   },
-  "overrides": [{
-    "files": [
-      "**/*.ts", "**/*.tsx"
-    ],
-    "plugins": ["import", "@typescript-eslint"],
-    "settings": {
-      "react": {
-        "version": "detect"
-      },
-      "import/parsers": {
-        "@typescript-eslint/parser": [".ts", ".tsx"]
-      },
-      "import/resolver": {
-        "typescript": {
-          "alwaysTryTypes": true,
-          "project": "apps/*/tsconfig.json"
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx"],
+      "plugins": ["import", "@typescript-eslint"],
+      "settings": {
+        "react": {
+          "version": "detect"
+        },
+        "import/parsers": {
+          "@typescript-eslint/parser": [".ts", ".tsx"]
+        },
+        "import/resolver": {
+          "typescript": {
+            "alwaysTryTypes": true,
+            "project": "apps/*/tsconfig.json"
+          }
         }
       }
     }
-  }]
+  ]
 }

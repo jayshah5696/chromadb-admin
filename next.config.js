@@ -4,7 +4,7 @@ const nextConfig = {
     config.module.rules.push({
       test: /\.node$/,
       use: 'node-loader',
-    });
+    })
 
     // Ignore https:// imports from chromadb (browser-only code path)
     config.module.rules.push({
@@ -13,15 +13,15 @@ const nextConfig = {
       resolve: {
         fullySpecified: false,
       },
-    });
+    })
 
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /^https:\/\//,
       })
-    );
+    )
 
-    return config;
+    return config
   },
 }
 

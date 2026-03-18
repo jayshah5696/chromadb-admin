@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import * as db from '@/lib/server/db'
+
+import { GET, POST, DELETE } from '../route'
+
 // Mock the db module before importing the route handlers
 vi.mock('@/lib/server/db', () => ({
   fetchRecords: vi.fn(),
@@ -18,9 +22,6 @@ vi.mock('@/lib/server/params', () => ({
   extractDatabase: vi.fn(() => 'default_database'),
   extractApiVersion: vi.fn(() => 'v1'),
 }))
-
-import { GET, POST, DELETE } from '../route'
-import * as db from '@/lib/server/db'
 
 const PARAMS = { params: { collectionName: 'test-collection' } }
 
@@ -102,9 +103,7 @@ describe('GET /api/collections/[collectionName]/records', () => {
     }
     vi.mocked(db.fetchRecordDetail).mockResolvedValue(mockRecord)
 
-    const request = makeRequest(
-      'http://localhost/api/collections/test-collection/records?recordId=rec-1'
-    )
+    const request = makeRequest('http://localhost/api/collections/test-collection/records?recordId=rec-1')
     const response = await GET(request, PARAMS)
     const data = await response.json()
 
@@ -130,19 +129,14 @@ describe('GET /api/collections/[collectionName]/records', () => {
 
 describe('POST /api/collections/[collectionName]/records', () => {
   it('queries by embedding array', async () => {
-    const mockResults = [
-      { id: 'r1', document: 'd1', metadata: {}, embedding: [0.1], distance: 0.01 },
-    ]
+    const mockResults = [{ id: 'r1', document: 'd1', metadata: {}, embedding: [0.1], distance: 0.01 }]
     vi.mocked(db.queryRecords).mockResolvedValue(mockResults)
 
-    const request = makeRequest(
-      'http://localhost/api/collections/test-collection/records',
-      {
-        method: 'POST',
-        body: JSON.stringify({ query: [0.5, 0.5, 0.5] }),
-        headers: { 'Content-Type': 'application/json' },
-      }
-    )
+    const request = makeRequest('http://localhost/api/collections/test-collection/records', {
+      method: 'POST',
+      body: JSON.stringify({ query: [0.5, 0.5, 0.5] }),
+      headers: { 'Content-Type': 'application/json' },
+    })
     const response = await POST(request, PARAMS)
     const data = await response.json()
 
@@ -152,19 +146,14 @@ describe('POST /api/collections/[collectionName]/records', () => {
   })
 
   it('queries by text string (ID lookup)', async () => {
-    const mockResults = [
-      { id: 'my-id', document: 'doc', metadata: {}, embedding: [0.1], distance: 0 },
-    ]
+    const mockResults = [{ id: 'my-id', document: 'doc', metadata: {}, embedding: [0.1], distance: 0 }]
     vi.mocked(db.queryRecordsText).mockResolvedValue(mockResults)
 
-    const request = makeRequest(
-      'http://localhost/api/collections/test-collection/records',
-      {
-        method: 'POST',
-        body: JSON.stringify({ query: 'my-id' }),
-        headers: { 'Content-Type': 'application/json' },
-      }
-    )
+    const request = makeRequest('http://localhost/api/collections/test-collection/records', {
+      method: 'POST',
+      body: JSON.stringify({ query: 'my-id' }),
+      headers: { 'Content-Type': 'application/json' },
+    })
     const response = await POST(request, PARAMS)
     const data = await response.json()
 
@@ -176,14 +165,11 @@ describe('POST /api/collections/[collectionName]/records', () => {
   it('parses comma-separated string as embedding floats', async () => {
     vi.mocked(db.queryRecords).mockResolvedValue([])
 
-    const request = makeRequest(
-      'http://localhost/api/collections/test-collection/records',
-      {
-        method: 'POST',
-        body: JSON.stringify({ query: '0.1,0.2,0.3' }),
-        headers: { 'Content-Type': 'application/json' },
-      }
-    )
+    const request = makeRequest('http://localhost/api/collections/test-collection/records', {
+      method: 'POST',
+      body: JSON.stringify({ query: '0.1,0.2,0.3' }),
+      headers: { 'Content-Type': 'application/json' },
+    })
     await POST(request, PARAMS)
 
     // Should parse as float array and call queryRecords (not queryRecordsText)
@@ -201,14 +187,11 @@ describe('POST /api/collections/[collectionName]/records', () => {
   it('returns 400 for InvalidDimension error', async () => {
     vi.mocked(db.queryRecords).mockRejectedValue(new Error('InvalidDimension'))
 
-    const request = makeRequest(
-      'http://localhost/api/collections/test-collection/records',
-      {
-        method: 'POST',
-        body: JSON.stringify({ query: [1.0] }),
-        headers: { 'Content-Type': 'application/json' },
-      }
-    )
+    const request = makeRequest('http://localhost/api/collections/test-collection/records', {
+      method: 'POST',
+      body: JSON.stringify({ query: [1.0] }),
+      headers: { 'Content-Type': 'application/json' },
+    })
     const response = await POST(request, PARAMS)
 
     expect(response.status).toBe(400)
@@ -219,14 +202,11 @@ describe('POST /api/collections/[collectionName]/records', () => {
   it('returns 404 for RecordNotFound error', async () => {
     vi.mocked(db.queryRecordsText).mockRejectedValue(new Error('RecordNotFound'))
 
-    const request = makeRequest(
-      'http://localhost/api/collections/test-collection/records',
-      {
-        method: 'POST',
-        body: JSON.stringify({ query: 'nonexistent-id' }),
-        headers: { 'Content-Type': 'application/json' },
-      }
-    )
+    const request = makeRequest('http://localhost/api/collections/test-collection/records', {
+      method: 'POST',
+      body: JSON.stringify({ query: 'nonexistent-id' }),
+      headers: { 'Content-Type': 'application/json' },
+    })
     const response = await POST(request, PARAMS)
 
     expect(response.status).toBe(404)
@@ -235,14 +215,11 @@ describe('POST /api/collections/[collectionName]/records', () => {
   it('returns 500 for unexpected errors', async () => {
     vi.mocked(db.queryRecords).mockRejectedValue(new Error('Unexpected'))
 
-    const request = makeRequest(
-      'http://localhost/api/collections/test-collection/records',
-      {
-        method: 'POST',
-        body: JSON.stringify({ query: [1.0] }),
-        headers: { 'Content-Type': 'application/json' },
-      }
-    )
+    const request = makeRequest('http://localhost/api/collections/test-collection/records', {
+      method: 'POST',
+      body: JSON.stringify({ query: [1.0] }),
+      headers: { 'Content-Type': 'application/json' },
+    })
     const response = await POST(request, PARAMS)
 
     expect(response.status).toBe(500)
@@ -255,14 +232,11 @@ describe('DELETE /api/collections/[collectionName]/records', () => {
   it('deletes a record by ID', async () => {
     vi.mocked(db.deleteRecord).mockResolvedValue({ success: true })
 
-    const request = makeRequest(
-      'http://localhost/api/collections/test-collection/records',
-      {
-        method: 'DELETE',
-        body: JSON.stringify({ id: 'rec-to-delete' }),
-        headers: { 'Content-Type': 'application/json' },
-      }
-    )
+    const request = makeRequest('http://localhost/api/collections/test-collection/records', {
+      method: 'DELETE',
+      body: JSON.stringify({ id: 'rec-to-delete' }),
+      headers: { 'Content-Type': 'application/json' },
+    })
     const response = await DELETE(request, PARAMS)
     const data = await response.json()
 
@@ -280,14 +254,11 @@ describe('DELETE /api/collections/[collectionName]/records', () => {
   })
 
   it('returns 400 when record ID is missing', async () => {
-    const request = makeRequest(
-      'http://localhost/api/collections/test-collection/records',
-      {
-        method: 'DELETE',
-        body: JSON.stringify({}),
-        headers: { 'Content-Type': 'application/json' },
-      }
-    )
+    const request = makeRequest('http://localhost/api/collections/test-collection/records', {
+      method: 'DELETE',
+      body: JSON.stringify({}),
+      headers: { 'Content-Type': 'application/json' },
+    })
     const response = await DELETE(request, PARAMS)
 
     expect(response.status).toBe(400)
@@ -298,14 +269,11 @@ describe('DELETE /api/collections/[collectionName]/records', () => {
   it('returns 500 on delete failure', async () => {
     vi.mocked(db.deleteRecord).mockRejectedValue(new Error('Delete failed'))
 
-    const request = makeRequest(
-      'http://localhost/api/collections/test-collection/records',
-      {
-        method: 'DELETE',
-        body: JSON.stringify({ id: 'rec-1' }),
-        headers: { 'Content-Type': 'application/json' },
-      }
-    )
+    const request = makeRequest('http://localhost/api/collections/test-collection/records', {
+      method: 'DELETE',
+      body: JSON.stringify({ id: 'rec-1' }),
+      headers: { 'Content-Type': 'application/json' },
+    })
     const response = await DELETE(request, PARAMS)
 
     expect(response.status).toBe(500)

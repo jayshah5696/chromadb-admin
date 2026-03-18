@@ -51,7 +51,6 @@ const DataToolbar = () => {
     setWhereFilter('')
   }
 
-
   const handleApplyFilter = () => {
     if (!whereInput.trim()) {
       setWhereFilter('')
