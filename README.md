@@ -21,10 +21,10 @@ The entire frontend has been rewritten with a three-panel layout inspired by Tab
 
 ChromaDB servers come in two API flavors:
 
-| Version | URL Pattern | Notes |
-|---------|-------------|-------|
-| **v1** (legacy) | `/api/v1/collections/...` | Older Chroma servers |
-| **v2** (current) | `/api/v2/tenants/{tenant}/databases/{db}/collections/...` | ChromaDB 0.4+ |
+| Version          | URL Pattern                                               | Notes                |
+| ---------------- | --------------------------------------------------------- | -------------------- |
+| **v1** (legacy)  | `/api/v1/collections/...`                                 | Older Chroma servers |
+| **v2** (current) | `/api/v2/tenants/{tenant}/databases/{db}/collections/...` | ChromaDB 0.4+        |
 
 This fork lets you select the API version on the Setup page. The v1 implementation uses raw HTTP calls (bypassing the `chromadb` npm client which only supports v2).
 
@@ -49,11 +49,11 @@ npm run test:watch  # watch mode
 
 **Test suites (53 tests):**
 
-| Suite | Tests | What it covers |
-|-------|-------|----------------|
-| `db.test.ts` | 24 | Collection ID cache (TTL, key generation, bulk caching, invalidation), `fetchRecords` pagination and record mapping, `fetchRecordDetail` with embeddings, `queryRecords` embedding queries, `queryRecordsText` ID lookup, `countRecord`, `deleteRecord`, `deleteCollection`, auth headers (Bearer/Basic), 301 redirect following, API version dispatch |
-| `db.perf.test.ts` | 16 | Rapid collection switching (10 collections, 1 list call), back-and-forth navigation cache reuse, concurrent request handling, large record pagination (page 50), list vs detail fetch payload differences, rapid row click cache reuse, cache invalidation on rename, 100-collection bulk caching, error resilience (failed fetches don't poison cache), large embedding queries (1536d and 3072d) |
-| `route.test.ts` | 13 | GET handler (paginated listing, single record detail, error handling), POST handler (embedding array query, text/ID query, comma-separated float parsing, InvalidDimension/RecordNotFound/500 errors), DELETE handler (success, missing ID validation, failure) |
+| Suite             | Tests | What it covers                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db.test.ts`      | 24    | Collection ID cache (TTL, key generation, bulk caching, invalidation), `fetchRecords` pagination and record mapping, `fetchRecordDetail` with embeddings, `queryRecords` embedding queries, `queryRecordsText` ID lookup, `countRecord`, `deleteRecord`, `deleteCollection`, auth headers (Bearer/Basic), 301 redirect following, API version dispatch                                             |
+| `db.perf.test.ts` | 16    | Rapid collection switching (10 collections, 1 list call), back-and-forth navigation cache reuse, concurrent request handling, large record pagination (page 50), list vs detail fetch payload differences, rapid row click cache reuse, cache invalidation on rename, 100-collection bulk caching, error resilience (failed fetches don't poison cache), large embedding queries (1536d and 3072d) |
+| `route.test.ts`   | 13    | GET handler (paginated listing, single record detail, error handling), POST handler (embedding array query, text/ID query, comma-separated float parsing, InvalidDimension/RecordNotFound/500 errors), DELETE handler (success, missing ID validation, failure)                                                                                                                                    |
 
 ### Tech Stack
 
@@ -90,7 +90,7 @@ docker run -p 3001:3001 fengzhichao/chromadb-admin
 
 Visit http://localhost:3001 in the browser.
 
-*NOTE*: Use `http://host.docker.internal:8000` for the connection string if you want to connect to a ChromaDB instance running locally.
+_NOTE_: Use `http://host.docker.internal:8000` for the connection string if you want to connect to a ChromaDB instance running locally.
 
 ## Build and Run with Docker Locally
 

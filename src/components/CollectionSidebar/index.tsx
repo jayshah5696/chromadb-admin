@@ -188,7 +188,11 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
             value={filter}
             onChange={e => setFilter(e.target.value)}
           />
-          <select className={styles.sortSelect} value={sortMode} onChange={e => setSortMode(e.target.value as SortMode)}>
+          <select
+            className={styles.sortSelect}
+            value={sortMode}
+            onChange={e => setSortMode(e.target.value as SortMode)}
+          >
             <option value="alpha-asc">Sort: A-Z</option>
             <option value="alpha-desc">Sort: Z-A</option>
             <option value="recent">Sort: Recently viewed</option>

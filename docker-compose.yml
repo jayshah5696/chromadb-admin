@@ -51,7 +51,6 @@ volumes:
   chroma8002_index_data:
   chroma8003_with_token_auth_index_data:
   chroma8004_with_basic_auth_index_data:
-
 #docker run -d --rm -p "8000:8000"  \
 #  -e CHROMA_SERVER_AUTHN_CREDENTIALS="test-token" \
 #  -e CHROMA_AUTH_TOKEN_TRANSPORT_HEADER="AUTHORIZATION" \
