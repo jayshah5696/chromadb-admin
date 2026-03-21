@@ -28,10 +28,7 @@ const DataGridRow = memo(
     onActionClick: (e: React.MouseEvent, record: Record) => void
   }) => {
     return (
-      <tr
-        className={`${styles.tr} ${isSelected ? styles.trSelected : ''}`}
-        onClick={() => onRowClick(record)}
-      >
+      <tr className={`${styles.tr} ${isSelected ? styles.trSelected : ''}`} onClick={() => onRowClick(record)}>
         <td className={`${styles.td} ${styles.actionCell}`}>
           <button className={styles.actionBtn} onClick={e => onActionClick(e, record)}>
             <IconDots size={14} stroke={1.5} />
@@ -66,7 +63,13 @@ const DataGrid = ({ collectionName }: { collectionName: string }) => {
   const setCurrentPage = useSetAtom(currentPageAtom)
 
   const { data: config } = useGetConfig()
-  const { data: queryResult, isLoading } = useGetCollectionRecords(config, collectionName, currentPage, query, whereFilter)
+  const { data: queryResult, isLoading } = useGetCollectionRecords(
+    config,
+    collectionName,
+    currentPage,
+    query,
+    whereFilter
+  )
   const deleteRecordMutation = useDeleteRecord(collectionName)
 
   const [actionMenu, setActionMenu] = useState<{ x: number; y: number; record: Record } | null>(null)
