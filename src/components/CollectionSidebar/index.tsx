@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { IconTable, IconEdit, IconTrash } from '@tabler/icons-react'
 import { notifications } from '@mantine/notifications'
 import { modals } from '@mantine/modals'
+import { useDebouncedValue } from '@mantine/hooks'
 import { Modal, TextInput, Group, Button } from '@mantine/core'
 
 import { useGetCollections, useGetConfig, useDeleteCollection, useRenameCollection } from '@/lib/client/query'
@@ -51,6 +52,7 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
 
   const initialState = useMemo(() => readSidebarState(), [])
   const [filter, setFilter] = useState(initialState.filter)
+  const [debouncedFilter] = useDebouncedValue(filter, 200)
   const [sortMode, setSortMode] = useState<SortMode>(initialState.sortMode)
   const [recentlyViewed, setRecentlyViewed] = useState<string[]>(initialState.recentlyViewed)
 
@@ -76,15 +78,15 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
     return all
   }, [collections, sortMode, recentlyViewed])
 
-  const filtered = sortedCollections.filter(c => c.toLowerCase().includes(filter.toLowerCase()))
+  const filtered = sortedCollections.filter(c => c.toLowerCase().includes(debouncedFilter.toLowerCase()))
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(
       SIDEBAR_STATE_KEY,
-      JSON.stringify({ filter, sortMode, scrollTop: listRef.current?.scrollTop || 0, recentlyViewed })
+      JSON.stringify({ filter: debouncedFilter, sortMode, scrollTop: listRef.current?.scrollTop || 0, recentlyViewed })
     )
-  }, [filter, sortMode, recentlyViewed])
+  }, [debouncedFilter, sortMode, recentlyViewed])
 
   useEffect(() => {
     if (listRef.current) {
@@ -205,7 +207,12 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
             if (typeof window === 'undefined') return
             window.localStorage.setItem(
               SIDEBAR_STATE_KEY,
-              JSON.stringify({ filter, sortMode, scrollTop: e.currentTarget.scrollTop, recentlyViewed })
+              JSON.stringify({
+                filter: debouncedFilter,
+                sortMode,
+                scrollTop: e.currentTarget.scrollTop,
+                recentlyViewed,
+              })
             )
           }}
         >
