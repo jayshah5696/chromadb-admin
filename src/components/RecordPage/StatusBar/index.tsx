@@ -4,7 +4,7 @@ import { useAtom, useAtomValue } from 'jotai'
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
 
 import { useGetCollectionRecords, useGetConfig } from '@/lib/client/query'
-import { currentPageAtom, queryAtom } from '@/components/RecordPage/atom'
+import { currentPageAtom, queryAtom, whereFilterAtom } from '@/components/RecordPage/atom'
 
 import styles from './index.module.scss'
 
@@ -12,9 +12,10 @@ const PAGE_SIZE = 20
 
 const StatusBar = ({ collectionName }: { collectionName: string }) => {
   const query = useAtomValue(queryAtom)
+  const whereFilter = useAtomValue(whereFilterAtom)
   const [currentPage, setCurrentPage] = useAtom(currentPageAtom)
   const { data: config } = useGetConfig()
-  const { data: queryResult } = useGetCollectionRecords(config, collectionName, currentPage, query)
+  const { data: queryResult } = useGetCollectionRecords(config, collectionName, currentPage, query, whereFilter)
 
   const withQuery = !!query
   const total = queryResult && !('error' in queryResult) ? queryResult.total : 0
