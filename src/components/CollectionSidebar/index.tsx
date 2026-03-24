@@ -76,7 +76,9 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
     return all
   }, [collections, sortMode, recentlyViewed])
 
-  const filtered = sortedCollections.filter(c => c.toLowerCase().includes(filter.toLowerCase()))
+  const filtered = useMemo(() => {
+    return sortedCollections.filter(c => c.toLowerCase().includes(filter.toLowerCase()))
+  }, [sortedCollections, filter])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
