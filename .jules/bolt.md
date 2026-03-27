@@ -1,3 +1,7 @@
 ## 2024-05-18 - [Add React.memo() to `DetailPanel` and `DataGrid`]
 **Learning:** `DataGrid` and `DetailPanel` use Jotai atoms. `DetailPanel` gets `selectedRecord` and `recordDetail` which triggers re-renders. `DataGrid` gets `selectedRecord` directly to apply selected class style. Selecting a row in `DataGrid` updates `selectedRecordAtom`, which causes `DataGrid` to re-render in its entirety, checking all 20 rows and updating classes.
 **Action:** The table rows in `DataGrid` can be separated into a memoized `Row` component. By doing so, when `selectedRecordAtom` updates, we avoid re-rendering all rows. We can extract the table `tr` elements into a `<TableRow>` component wrapped with `React.memo()`. The parent `DataGrid` will still re-render because it reads `selectedRecordAtom`, but if we pass primitive props or memoized callbacks to `<TableRow>`, React can skip re-rendering rows that haven't changed their selection state.
+
+## 2024-11-06 - [Prevent O(N) Re-renders with selectAtom]
+**Learning:** `useAtom(selectedRecordAtom)` in `DataGrid` caused the entire list of records to re-render whenever the selection changed, leading to O(N) re-renders, as all `DataGridRow` components would re-evaluate.
+**Action:** Use `selectAtom` from `jotai/utils` inside the child list components (e.g. `DataGridRow`) to subscribe strictly to a derived primitive value (`isSelected`). The parent `DataGrid` component should only use `useSetAtom` to update the selection, thereby avoiding unnecessary subscription updates and skipping re-renders of the parent list entirely.

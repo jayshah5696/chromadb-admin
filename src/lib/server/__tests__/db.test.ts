@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { ChromaClient, DefaultEmbeddingFunction } from 'chromadb'
 
 import * as db from '../db'
-import { ChromaClient, DefaultEmbeddingFunction } from 'chromadb'
 
 // Mock the chromadb module for v2 API tests
 vi.mock('chromadb', () => {
@@ -56,13 +56,9 @@ describe('v1 API implementations (raw HTTP)', () => {
   describe('fetchRecords', () => {
     it('fetches collections list to populate cache, then fetches records', async () => {
       // 1. Mock collections list response
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse([{ id: 'uuid-1', name: 'collection-1', metadata: null }])
-      )
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'uuid-1', name: 'collection-1', metadata: null }]))
       // 2. Mock records response
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse({ ids: ['r1'], documents: ['d1'], metadatas: [null] })
-      )
+      fetchMock.mockImplementationOnce(() => jsonResponse({ ids: ['r1'], documents: ['d1'], metadatas: [null] }))
 
       const result = await db.fetchRecords(conn, AUTH, 'collection-1', 1, TENANT, DB, 'v1')
 
@@ -72,9 +68,7 @@ describe('v1 API implementations (raw HTTP)', () => {
 
     it('passes where filter to post body', async () => {
       // Assume cache is already populated or mock it again
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }])
-      )
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }]))
       fetchMock.mockImplementationOnce((url, options) => {
         const body = JSON.parse(options.body)
         expect(body.where).toEqual({ source: 'notion' })
@@ -87,17 +81,15 @@ describe('v1 API implementations (raw HTTP)', () => {
     it('throws error if collection name not found in list', async () => {
       fetchMock.mockImplementationOnce(() => jsonResponse([]))
 
-      await expect(
-        db.fetchRecords(conn, AUTH, 'nonexistent', 1, TENANT, DB, 'v1')
-      ).rejects.toThrow("Collection 'nonexistent' not found")
+      await expect(db.fetchRecords(conn, AUTH, 'nonexistent', 1, TENANT, DB, 'v1')).rejects.toThrow(
+        "Collection 'nonexistent' not found"
+      )
     })
   })
 
   describe('fetchRecordDetail', () => {
     it('fetches embeddings for a single record', async () => {
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }])
-      )
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }]))
       fetchMock.mockImplementationOnce((url, options) => {
         const body = JSON.parse(options.body)
         expect(body.ids).toEqual(['rec-123'])
@@ -121,24 +113,18 @@ describe('v1 API implementations (raw HTTP)', () => {
     })
 
     it('throws RecordNotFound if API returns empty ids', async () => {
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }])
-      )
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse({ ids: [], documents: [], metadatas: [] })
-      )
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }]))
+      fetchMock.mockImplementationOnce(() => jsonResponse({ ids: [], documents: [], metadatas: [] }))
 
-      await expect(
-        db.fetchRecordDetail(conn, AUTH, 'docs', 'missing', TENANT, DB, 'v1')
-      ).rejects.toThrow('RecordNotFound')
+      await expect(db.fetchRecordDetail(conn, AUTH, 'docs', 'missing', TENANT, DB, 'v1')).rejects.toThrow(
+        'RecordNotFound'
+      )
     })
   })
 
   describe('queryRecords (embedding query)', () => {
     it('sends query embeddings and returns distances', async () => {
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }])
-      )
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }]))
       fetchMock.mockImplementationOnce(() =>
         jsonResponse({
           ids: [['r1']],
@@ -157,24 +143,16 @@ describe('v1 API implementations (raw HTTP)', () => {
     })
 
     it('throws error if API returns error (e.g., InvalidDimension)', async () => {
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }])
-      )
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse({ error: 'InvalidDimension' })
-      )
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }]))
+      fetchMock.mockImplementationOnce(() => jsonResponse({ error: 'InvalidDimension' }))
 
-      await expect(
-        db.queryRecords(conn, AUTH, 'docs', [1.0], TENANT, DB, 'v1')
-      ).rejects.toThrow('InvalidDimension')
+      await expect(db.queryRecords(conn, AUTH, 'docs', [1.0], TENANT, DB, 'v1')).rejects.toThrow('InvalidDimension')
     })
   })
 
   describe('queryRecordsText (ID lookup)', () => {
     it('returns single record array when ID is found', async () => {
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }])
-      )
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }]))
       fetchMock.mockImplementationOnce(() =>
         jsonResponse({
           ids: ['my-id'],
@@ -192,30 +170,26 @@ describe('v1 API implementations (raw HTTP)', () => {
     })
 
     it('throws RecordNotFound if ID does not exist', async () => {
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }])
-      )
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse({ ids: [], documents: [], metadatas: [], embeddings: [] })
-      )
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }]))
+      fetchMock.mockImplementationOnce(() => jsonResponse({ ids: [], documents: [], metadatas: [], embeddings: [] }))
 
-      await expect(
-        db.queryRecordsText(conn, AUTH, 'docs', 'no-such-id', TENANT, DB, 'v1')
-      ).rejects.toThrow('RecordNotFound')
+      await expect(db.queryRecordsText(conn, AUTH, 'docs', 'no-such-id', TENANT, DB, 'v1')).rejects.toThrow(
+        'RecordNotFound'
+      )
     })
   })
 
   describe('countRecord', () => {
     it('uses GET /count when no where filter is provided', async () => {
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }]))
       fetchMock.mockImplementationOnce(() =>
-        jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }])
-      )
-      fetchMock.mockImplementationOnce(() => Promise.resolve({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(42),
-        headers: new Headers(),
-      } as Response)) // count returns plain number
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(42),
+          headers: new Headers(),
+        } as Response)
+      ) // count returns plain number
 
       const count = await db.countRecord(conn, AUTH, 'docs', TENANT, DB, 'v1')
 
@@ -225,12 +199,8 @@ describe('v1 API implementations (raw HTTP)', () => {
     })
 
     it('uses POST /get with where filter when provided and counts ids', async () => {
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }])
-      )
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse({ ids: ['r1', 'r2', 'r3'] })
-      )
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }]))
+      fetchMock.mockImplementationOnce(() => jsonResponse({ ids: ['r1', 'r2', 'r3'] }))
 
       const count = await db.countRecord(conn, AUTH, 'docs', TENANT, DB, 'v1', { a: 1 })
 
@@ -265,16 +235,16 @@ describe('v1 API implementations (raw HTTP)', () => {
 
   describe('Redirects', () => {
     it('follows 301 redirects manually to preserve POST method', async () => {
-      fetchMock.mockImplementationOnce(() =>
-        jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }])
-      )
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'uuid-1', name: 'docs', metadata: null }]))
 
       // Mock redirect response for the POST request
-      fetchMock.mockImplementationOnce(() => Promise.resolve({
-        ok: false,
-        status: 301,
-        headers: new Headers({ location: 'http://localhost/redirected' }),
-      } as Response))
+      fetchMock.mockImplementationOnce(() =>
+        Promise.resolve({
+          ok: false,
+          status: 301,
+          headers: new Headers({ location: 'http://localhost/redirected' }),
+        } as Response)
+      )
 
       // Mock successful response at redirected location
       fetchMock.mockImplementationOnce(() => jsonResponse({ success: true }))
@@ -301,28 +271,33 @@ describe('v2 API implementations (chromadb client)', () => {
     const mockGet = vi.fn().mockResolvedValue({
       ids: ['v2-r1'],
       documents: ['v2-d1'],
-      metadatas: [{ source: 'v2' }]
+      metadatas: [{ source: 'v2' }],
     })
 
     const mockGetCollection = vi.fn().mockResolvedValue({
-      get: mockGet
+      get: mockGet,
     })
 
-    vi.mocked(ChromaClient).mockImplementation(() => ({
-      getCollection: mockGetCollection
-    } as any))
+    vi.mocked(ChromaClient).mockImplementation(
+      () =>
+        ({
+          getCollection: mockGetCollection,
+        }) as any
+    )
 
     const result = await db.fetchRecords(conn, AUTH, 'v2-collection', 1, TENANT, DB, 'v2')
 
     expect(ChromaClient).toHaveBeenCalled()
     expect(mockGetCollection).toHaveBeenCalledWith({
       name: 'v2-collection',
-      embeddingFunction: expect.any(Object)
+      embeddingFunction: expect.any(Object),
     })
-    expect(mockGet).toHaveBeenCalledWith(expect.objectContaining({
-      limit: 20,
-      offset: 0
-    }))
+    expect(mockGet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        limit: 20,
+        offset: 0,
+      })
+    )
 
     expect(result).toEqual([{ id: 'v2-r1', document: 'v2-d1', metadata: { source: 'v2' } }])
   })
@@ -330,9 +305,12 @@ describe('v2 API implementations (chromadb client)', () => {
   it('deleteCollection calls client.deleteCollection() directly', async () => {
     const mockDeleteCollection = vi.fn().mockResolvedValue(undefined)
 
-    vi.mocked(ChromaClient).mockImplementation(() => ({
-      deleteCollection: mockDeleteCollection
-    } as any))
+    vi.mocked(ChromaClient).mockImplementation(
+      () =>
+        ({
+          deleteCollection: mockDeleteCollection,
+        }) as any
+    )
 
     const result = await db.deleteCollection(conn, AUTH, 'bad-collection', TENANT, DB, 'v2')
 
