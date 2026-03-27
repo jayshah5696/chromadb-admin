@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, memo } from 'react'
-import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { selectAtom } from 'jotai/utils'
+import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import { IconDots, IconSearch, IconCopy, IconTrash } from '@tabler/icons-react'
 import { notifications } from '@mantine/notifications'
 import { modals } from '@mantine/modals'
@@ -16,22 +17,24 @@ import type { Record } from '@/lib/types'
 const DataGridRow = memo(
   ({
     record,
-    isSelected,
     withQuery,
     onRowClick,
     onActionClick,
   }: {
     record: Record
-    isSelected: boolean
     withQuery: boolean
     onRowClick: (record: Record) => void
     onActionClick: (e: React.MouseEvent, record: Record) => void
   }) => {
+    // Memoize the selector to prevent unnecessary re-subscriptions
+    const isSelectedAtom = React.useMemo(
+      () => selectAtom(selectedRecordAtom, selected => selected?.id === record.id),
+      [record.id]
+    )
+    const isSelected = useAtomValue(isSelectedAtom)
+
     return (
-      <tr
-        className={`${styles.tr} ${isSelected ? styles.trSelected : ''}`}
-        onClick={() => onRowClick(record)}
-      >
+      <tr className={`${styles.tr} ${isSelected ? styles.trSelected : ''}`} onClick={() => onRowClick(record)}>
         <td className={`${styles.td} ${styles.actionCell}`}>
           <button className={styles.actionBtn} onClick={e => onActionClick(e, record)}>
             <IconDots size={14} stroke={1.5} />
@@ -61,12 +64,19 @@ const DataGrid = ({ collectionName }: { collectionName: string }) => {
   const query = useAtomValue(queryAtom)
   const whereFilter = useAtomValue(whereFilterAtom)
   const currentPage = useAtomValue(currentPageAtom)
-  const [selectedRecord, setSelectedRecord] = useAtom(selectedRecordAtom)
+  const setSelectedRecord = useSetAtom(selectedRecordAtom)
   const setQuery = useSetAtom(queryAtom)
   const setCurrentPage = useSetAtom(currentPageAtom)
+  const store = useStore()
 
   const { data: config } = useGetConfig()
-  const { data: queryResult, isLoading } = useGetCollectionRecords(config, collectionName, currentPage, query, whereFilter)
+  const { data: queryResult, isLoading } = useGetCollectionRecords(
+    config,
+    collectionName,
+    currentPage,
+    query,
+    whereFilter
+  )
   const deleteRecordMutation = useDeleteRecord(collectionName)
 
   const [actionMenu, setActionMenu] = useState<{ x: number; y: number; record: Record } | null>(null)
@@ -139,7 +149,7 @@ const DataGrid = ({ collectionName }: { collectionName: string }) => {
             message: 'Record has been successfully deleted',
             color: 'green',
           })
-          if (selectedRecord?.id === recordId) {
+          if (store.get(selectedRecordAtom)?.id === recordId) {
             setSelectedRecord(null)
           }
         } catch (error) {
@@ -204,7 +214,6 @@ const DataGrid = ({ collectionName }: { collectionName: string }) => {
               <DataGridRow
                 key={record.id}
                 record={record}
-                isSelected={selectedRecord?.id === record.id}
                 withQuery={withQuery}
                 onRowClick={handleRowClick}
                 onActionClick={handleActionClick}

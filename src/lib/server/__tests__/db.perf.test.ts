@@ -67,16 +67,12 @@ function makeRecordsWithEmbeddings(count: number, dims: number = 1536) {
     ids: Array.from({ length: count }, (_, i) => `rec-${i}`),
     documents: Array.from({ length: count }, (_, i) => `doc text ${i}`),
     metadatas: Array.from({ length: count }, (_, i) => ({ index: i })),
-    embeddings: Array.from({ length: count }, () =>
-      Array.from({ length: dims }, () => Math.random())
-    )
+    embeddings: Array.from({ length: count }, () => Array.from({ length: dims }, () => Math.random())),
   }
 }
 
 describe('v1 API Cache Performance & Network Optimization', () => {
-
   describe('Collection ID Caching', () => {
-
     it('caches all collections from a single list request (bulk cache population)', async () => {
       const mockCollections = makeMockCollections(10)
 
@@ -128,7 +124,7 @@ describe('v1 API Cache Performance & Network Optimization', () => {
     it('renaming a collection invalidates its old cache key', async () => {
       const mockCollections = [
         { id: 'uuid-1', name: 'old-name', metadata: null },
-        { id: 'uuid-2', name: 'other', metadata: null }
+        { id: 'uuid-2', name: 'other', metadata: null },
       ]
 
       // 1. Initial list populates cache with 'old-name'
@@ -138,9 +134,7 @@ describe('v1 API Cache Performance & Network Optimization', () => {
       // 3. Mock create new collection
       fetchMock.mockImplementationOnce(() => jsonResponse({}))
       // 4. Mock list again to find 'new-name' ID (triggered by rename logic getting new collection ID)
-      fetchMock.mockImplementationOnce(() => jsonResponse([
-        { id: 'new-uuid', name: 'new-name', metadata: null }
-      ]))
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'new-uuid', name: 'new-name', metadata: null }]))
       // 5. Mock add records to new collection
       fetchMock.mockImplementationOnce(() => jsonResponse({}))
       // 6. Mock delete old collection
@@ -154,13 +148,11 @@ describe('v1 API Cache Performance & Network Optimization', () => {
 
       // Now try to fetch old-name again. It should be missing from cache and
       // trigger a list fetch. The list fetch won't have it, throwing an error.
-      fetchMock.mockImplementationOnce(() => jsonResponse([
-        { id: 'new-uuid', name: 'new-name', metadata: null }
-      ]))
+      fetchMock.mockImplementationOnce(() => jsonResponse([{ id: 'new-uuid', name: 'new-name', metadata: null }]))
 
-      await expect(
-        db.fetchRecords(conn, AUTH, 'old-name', 1, TENANT, DB, 'v1')
-      ).rejects.toThrow("Collection 'old-name' not found")
+      await expect(db.fetchRecords(conn, AUTH, 'old-name', 1, TENANT, DB, 'v1')).rejects.toThrow(
+        "Collection 'old-name' not found"
+      )
 
       // 7 previous calls + 1 new list call
       expect(fetchMock).toHaveBeenCalledTimes(8)
@@ -170,9 +162,7 @@ describe('v1 API Cache Performance & Network Optimization', () => {
       // First call fails
       fetchMock.mockImplementationOnce(() => errorResponse(500, 'Internal Server Error'))
 
-      await expect(
-        db.fetchRecords(conn, AUTH, 'collection-0', 1, TENANT, DB, 'v1')
-      ).rejects.toThrow('Failed to fetch')
+      await expect(db.fetchRecords(conn, AUTH, 'collection-0', 1, TENANT, DB, 'v1')).rejects.toThrow('Failed to fetch')
 
       // Second call succeeds
       fetchMock.mockImplementationOnce(() => jsonResponse(makeMockCollections(1)))
@@ -185,7 +175,6 @@ describe('v1 API Cache Performance & Network Optimization', () => {
   })
 
   describe('Payload Optimization (Lazy Embeddings)', () => {
-
     beforeEach(() => {
       // Pre-populate cache so we only measure the target requests
       fetchMock.mockImplementationOnce(() => jsonResponse(makeMockCollections(1)))
@@ -240,7 +229,6 @@ describe('v1 API Cache Performance & Network Optimization', () => {
   })
 
   describe('Real-world Interaction Scenarios', () => {
-
     it('rapidly switching between collections uses cache efficiently', async () => {
       const collections = makeMockCollections(5)
       // Initial list
@@ -261,9 +249,9 @@ describe('v1 API Cache Performance & Network Optimization', () => {
 
     it('handles concurrent requests without redundant list fetches', async () => {
       // Setup a delayed list response to simulate network latency
-      let resolveList: any;
+      let resolveList: any
       const listPromise = new Promise(resolve => {
-        resolveList = resolve;
+        resolveList = resolve
       })
 
       fetchMock.mockImplementationOnce(() => listPromise)
@@ -293,11 +281,11 @@ describe('v1 API Cache Performance & Network Optimization', () => {
 
       // Create a huge mock result (e.g. 10 records with 3072d embeddings)
       const hugeResult = {
-        ids: [Array.from({length: 10}, (_, i) => `r${i}`)],
-        documents: [Array.from({length: 10}, () => "doc")],
-        metadatas: [Array.from({length: 10}, () => ({}))],
-        embeddings: [Array.from({length: 10}, () => Array(3072).fill(0.1))],
-        distances: [Array.from({length: 10}, () => 0.05)]
+        ids: [Array.from({ length: 10 }, (_, i) => `r${i}`)],
+        documents: [Array.from({ length: 10 }, () => 'doc')],
+        metadatas: [Array.from({ length: 10 }, () => ({}))],
+        embeddings: [Array.from({ length: 10 }, () => Array(3072).fill(0.1))],
+        distances: [Array.from({ length: 10 }, () => 0.05)],
       }
 
       fetchMock.mockImplementationOnce(() => jsonResponse(hugeResult))

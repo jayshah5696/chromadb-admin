@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 import * as db from '@/lib/server/db'
-
 import { GET, POST, DELETE } from '../route'
 
 // Mock the db module before importing the route handlers
