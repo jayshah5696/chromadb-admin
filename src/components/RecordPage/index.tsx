@@ -9,9 +9,13 @@ import DataToolbar from './DataToolbar'
 import DataGrid from './DataGrid'
 import { detailPanelOpenAtom } from './atom'
 
-const RecordPage = ({ collectionName }: { collectionName: string }) => {
+const DetailPanelWrapper = ({ collectionName }: { collectionName: string }) => {
   const detailPanelOpen = useAtomValue(detailPanelOpenAtom)
+  if (!detailPanelOpen) return null
+  return <DetailPanel collectionName={collectionName} />
+}
 
+const RecordPage = ({ collectionName }: { collectionName: string }) => {
   return (
     <ModalsProvider>
       <div
@@ -25,7 +29,7 @@ const RecordPage = ({ collectionName }: { collectionName: string }) => {
         <DataToolbar />
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           <DataGrid collectionName={collectionName} />
-          {detailPanelOpen && <DetailPanel collectionName={collectionName} />}
+          <DetailPanelWrapper collectionName={collectionName} />
         </div>
         <StatusBar collectionName={collectionName} />
       </div>
