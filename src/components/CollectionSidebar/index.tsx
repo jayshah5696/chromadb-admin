@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { IconTable, IconEdit, IconTrash } from '@tabler/icons-react'
 import { notifications } from '@mantine/notifications'
 import { modals } from '@mantine/modals'
+import { useDebouncedCallback } from '@mantine/hooks'
 import { Modal, TextInput, Group, Button } from '@mantine/core'
 
 import { useGetCollections, useGetConfig, useDeleteCollection, useRenameCollection } from '@/lib/client/query'
@@ -76,7 +77,18 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
     return all
   }, [collections, sortMode, recentlyViewed])
 
-  const filtered = sortedCollections.filter(c => c.toLowerCase().includes(filter.toLowerCase()))
+  // ⚡ Bolt: Memoize filtered collections to prevent unnecessary recalculations on every render
+  const filtered = useMemo(() => {
+    const lowerFilter = filter.toLowerCase()
+    return sortedCollections.filter(c => c.toLowerCase().includes(lowerFilter))
+  }, [sortedCollections, filter])
+
+  // ⚡ Bolt: Debounce scroll events to prevent blocking the main thread during fast scrolling
+  // Saving to localStorage synchronously on every scroll frame causes significant UI jank
+  const handleScroll = useDebouncedCallback((scrollTop: number) => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify({ filter, sortMode, scrollTop, recentlyViewed }))
+  }, 200)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -198,17 +210,7 @@ const CollectionSidebar = ({ currentCollection }: { currentCollection?: string }
             <option value="recent">Sort: Recently viewed</option>
           </select>
         </div>
-        <div
-          className={styles.list}
-          ref={listRef}
-          onScroll={e => {
-            if (typeof window === 'undefined') return
-            window.localStorage.setItem(
-              SIDEBAR_STATE_KEY,
-              JSON.stringify({ filter, sortMode, scrollTop: e.currentTarget.scrollTop, recentlyViewed })
-            )
-          }}
-        >
+        <div className={styles.list} ref={listRef} onScroll={e => handleScroll(e.currentTarget.scrollTop)}>
           {filtered.map(collection => (
             <div
               key={collection}
