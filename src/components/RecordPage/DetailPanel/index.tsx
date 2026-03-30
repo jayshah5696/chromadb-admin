@@ -12,10 +12,11 @@ const DetailPanel = ({ collectionName }: { collectionName: string }) => {
   const selectedRecord = useAtomValue(selectedRecordAtom)
   const setDetailPanelOpen = useSetAtom(detailPanelOpenAtom)
   const { data: config } = useGetConfig()
+  // ⚡ Bolt: Prevent unnecessary API call if embedding is already present
   const { data: recordDetail, isLoading: isDetailLoading } = useGetRecordDetail(
     config,
     collectionName,
-    selectedRecord?.id
+    selectedRecord?.embedding ? null : selectedRecord?.id
   )
 
   const embedding = recordDetail?.embedding ?? selectedRecord?.embedding
