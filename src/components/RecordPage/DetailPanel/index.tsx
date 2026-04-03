@@ -92,4 +92,11 @@ const DetailPanel = ({ collectionName }: { collectionName: string }) => {
   )
 }
 
-export default DetailPanel
+const DetailPanelWrapper = ({ collectionName }: { collectionName: string }) => {
+  const detailPanelOpen = useAtomValue(detailPanelOpenAtom)
+  if (!detailPanelOpen) return null
+
+  return <DetailPanel collectionName={collectionName} />
+}
+
+export default DetailPanelWrapper
