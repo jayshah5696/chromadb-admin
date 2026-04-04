@@ -7,3 +7,8 @@
 
 **Learning:** Even if `DataGridRow` is memoized, if the parent `DataGrid` uses `useAtom(selectedRecordAtom)`, the entire `DataGrid` will still re-render when the selection changes, causing unchanged props to be evaluated for `DataGridRow`. This makes the O(N) re-render still occur at the parent level.
 **Action:** Move `useAtomValue(selectedRecordAtom)` down into `DataGridRow` itself so each row can subscribe individually to the selection state and compute its own `isSelected`. Change the parent `DataGrid` to only use `useSetAtom(selectedRecordAtom)`. This turns an O(N) parent re-render into an O(1) row re-render (only the newly selected and unselected rows re-render). For edge cases where action handlers need atom values without subscribing (like `handleDeleteRecord`), use Jotai's `useStore().get(atom)`.
+
+## 2025-02-13 - [DetailPanel Toggle Jotai Atom Re-renders]
+
+**Learning:** When a UI toggle atom (like `detailPanelOpenAtom`) is subscribed to in a parent layout component (like `RecordPage`), changing the toggle forces the entire layout and all its non-memoized children (`DataGrid`, `DataToolbar`, `StatusBar`) to re-render. This causes O(N) re-renders for sibling components unnecessarily.
+**Action:** Push the atom subscription down into the component that is actually conditionally rendered. Instead of `RecordPage` reading the atom and conditionally rendering `<DetailPanel />`, make `DetailPanel` an exported wrapper component that reads the atom and returns `null` or the actual `<DetailPanelContent />`. This reduces the toggle action to an O(1) re-render focused solely on the component entering/leaving the DOM.

@@ -1,17 +1,13 @@
 'use client'
 
-import { useAtomValue } from 'jotai'
 import { ModalsProvider } from '@mantine/modals'
 
 import StatusBar from './StatusBar'
 import DetailPanel from './DetailPanel'
 import DataToolbar from './DataToolbar'
 import DataGrid from './DataGrid'
-import { detailPanelOpenAtom } from './atom'
 
 const RecordPage = ({ collectionName }: { collectionName: string }) => {
-  const detailPanelOpen = useAtomValue(detailPanelOpenAtom)
-
   return (
     <ModalsProvider>
       <div
@@ -25,7 +21,7 @@ const RecordPage = ({ collectionName }: { collectionName: string }) => {
         <DataToolbar />
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           <DataGrid collectionName={collectionName} />
-          {detailPanelOpen && <DetailPanel collectionName={collectionName} />}
+          <DetailPanel collectionName={collectionName} />
         </div>
         <StatusBar collectionName={collectionName} />
       </div>
