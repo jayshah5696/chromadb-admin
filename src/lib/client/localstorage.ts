@@ -3,6 +3,22 @@ import type { AppConfig } from '@/lib/types'
 const localStorageItemKey = 'chromadb-admin-config'
 
 export function getConfig(): AppConfig {
+  if (typeof window === 'undefined') {
+    return {
+      connectionString: '',
+      currentCollection: '',
+      authType: 'no_auth',
+      token: '',
+      username: '',
+      password: '',
+      tenant: 'default_tenant',
+      database: 'default_database',
+      embeddingModelUrl: '',
+      embeddingModel: 'text-embedding-3-small',
+      apiVersion: 'v1',
+    }
+  }
+
   const config = window.localStorage.getItem(localStorageItemKey)
   if (config) {
     return JSON.parse(config)
