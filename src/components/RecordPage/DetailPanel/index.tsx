@@ -8,7 +8,7 @@ import { selectedRecordAtom, detailPanelOpenAtom } from '@/components/RecordPage
 
 import styles from './index.module.scss'
 
-const DetailPanel = ({ collectionName }: { collectionName: string }) => {
+const DetailPanelInner = ({ collectionName }: { collectionName: string }) => {
   const selectedRecord = useAtomValue(selectedRecordAtom)
   const setDetailPanelOpen = useSetAtom(detailPanelOpenAtom)
   const { data: config } = useGetConfig()
@@ -90,6 +90,13 @@ const DetailPanel = ({ collectionName }: { collectionName: string }) => {
       )}
     </div>
   )
+}
+
+const DetailPanel = ({ collectionName }: { collectionName: string }) => {
+  const detailPanelOpen = useAtomValue(detailPanelOpenAtom)
+  if (!detailPanelOpen) return null
+
+  return <DetailPanelInner collectionName={collectionName} />
 }
 
 export default DetailPanel
